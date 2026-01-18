@@ -60,7 +60,7 @@ const autoCompleteComplaints = async () => {
       if (diff >= HOURS(48)) {
         await Notification.create({
           userId: null,
-          role: "admin",
+          role: "Admin",
           complaintId: c._id,
           message: "Complaint in progress for more than 48 hours."
         });
