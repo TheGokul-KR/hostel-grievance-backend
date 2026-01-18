@@ -84,3 +84,7 @@ notificationSchema.index(
 module.exports =
   mongoose.models.Notification ||
   mongoose.model("Notification", notificationSchema);
+  
+notificationSchema.pre("validate", function () {
+  console.log("NOTIFICATION ROLE RECEIVED:", this.role);
+});
