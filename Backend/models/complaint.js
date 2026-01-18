@@ -272,9 +272,7 @@ complaintSchema.set("toJSON", { virtuals: true });
 complaintSchema.set("toObject", { virtuals: true });
 
 // ================= EXPORT =================
-module.exports =
-  mongoose.models.Complaint ||
-  mongoose.model("Complaint", complaintSchema);
+
 
 // ================= AUTO CONFIRM HELPER =================
 complaintSchema.statics.autoConfirmExpired = async function () {
@@ -304,3 +302,6 @@ complaintSchema.statics.autoConfirmExpired = async function () {
 
   return complaints.length;
 };
+module.exports =
+  mongoose.models.Complaint ||
+  mongoose.model("Complaint", complaintSchema);
