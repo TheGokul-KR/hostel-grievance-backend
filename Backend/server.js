@@ -10,7 +10,10 @@ const app = express();
 // ================= MIDDLEWARE =================
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      process.env.FRONTEND_URL
+    ],
     credentials: true
   })
 );
@@ -59,7 +62,7 @@ app.use((err, req, res, next) => {
 });
 
 // ================= SERVER =================
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);
 });
