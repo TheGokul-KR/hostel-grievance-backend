@@ -1,4 +1,4 @@
-const Complaint = require("../models/Complaint");
+const Complaint = require("../models/complaint");
 const Notification = require("../models/Notification");
 
 const HOURS = (h) => h * 60 * 60 * 1000;
