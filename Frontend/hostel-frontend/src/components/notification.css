@@ -1,0 +1,151 @@
+.notif-wrapper {
+  position: relative;
+}
+
+/* BELL */
+.notif-bell {
+  font-size: 22px;
+  cursor: pointer;
+  position: relative;
+  color: #1e293b;
+  transition: transform 0.2s ease;
+}
+
+.notif-bell:hover {
+  transform: scale(1.05);
+}
+
+/* BADGE */
+.notif-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: linear-gradient(45deg, #ef4444, #f97316);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 50%;
+  padding: 2px 6px;
+  box-shadow: 0 0 0 2px white;
+}
+
+/* PANEL */
+.notif-panel {
+  position: absolute;
+  right: 0;
+  top: 36px;
+  width: 300px;
+  max-height: 380px;
+  overflow: hidden;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: 0 25px 45px rgba(0, 0, 0, 0.18);
+  z-index: 999;
+  animation: notifFade 0.25s ease;
+}
+
+/* HEADER */
+.notif-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.notif-header h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.notif-count {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* LIST */
+.notif-list {
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* SCROLL */
+.notif-list::-webkit-scrollbar {
+  width: 6px;
+}
+.notif-list::-webkit-scrollbar-thumb {
+  background: #cbd5f5;
+  border-radius: 10px;
+}
+
+/* EMPTY */
+.notif-empty {
+  text-align: center;
+  color: #64748b;
+  font-size: 13px;
+  padding: 14px 0;
+}
+
+/* ITEM */
+.notif-item {
+  padding: 10px 12px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  background: #f8fafc;
+  cursor: pointer;
+  font-size: 13px;
+  color: #1e293b;
+  transition: 0.25s;
+  line-height: 1.4;
+  border-left: 4px solid transparent;
+}
+
+.notif-item:hover {
+  background: #f1f5f9;
+  transform: translateY(-1px);
+}
+
+/* UNREAD */
+.notif-item.unread {
+  border-left: 4px solid #6366f1;
+  background: #eef2ff;
+  font-weight: 500;
+}
+
+/* READ */
+.notif-item.read {
+  opacity: 0.6;
+}
+
+/* MESSAGE */
+.notif-message {
+  margin-bottom: 4px;
+}
+
+/* TIME */
+.notif-time {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* ANIMATION */
+@keyframes notifFade {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* MOBILE */
+@media (max-width: 600px) {
+  .notif-panel {
+    width: 260px;
+    right: -10px;
+  }
+}

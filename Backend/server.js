@@ -1,0 +1,65 @@
+const express = require("express");
+const cors = require("cors");
+const path = require("path");
+require("dotenv").config();
+
+require("./db");
+
+const app = express();
+
+// ================= MIDDLEWARE =================
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true
+  })
+);
+
+app.use(express.json());
+
+// serve uploaded images
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// ================= HOME =================
+app.get("/", (req, res) => {
+  res.send("Hostel Complaint Tracker Backend is running");
+});
+
+// ================= ROUTES =================
+app.use("/api/auth", require("./routes/auth"));
+app.use("/api/complaints", require("./routes/complaint"));
+app.use("/api/notifications", require("./routes/Notification"));
+app.use("/api/notices", require("./routes/notice"));
+app.use("/api/admin", require("./routes/adminRoutes"));
+
+// ================= AUTO COMPLETE JOB =================
+const autoCompleteComplaints = require("./jobs/autoCompleteComplaints");
+
+// run once on server start
+autoCompleteComplaints().catch(err =>
+  console.error("Auto job startup error:", err.message)
+);
+
+// run every 1 hour
+setInterval(() => {
+  autoCompleteComplaints().catch(err =>
+    console.error("Auto job interval error:", err.message)
+  );
+}, 60 * 60 * 1000);
+
+// ================= 404 HANDLER =================
+app.use((req, res) => {
+  res.status(404).json({ message: "API route not found" });
+});
+
+// ================= GLOBAL ERROR HANDLER =================
+app.use((err, req, res, next) => {
+  console.error("GLOBAL ERROR:", err);
+  res.status(500).json({ message: err.message || "Internal server error" });
+});
+
+// ================= SERVER =================
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server started on port ${PORT}`);
+});
