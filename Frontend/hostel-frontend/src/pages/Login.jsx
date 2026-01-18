@@ -41,7 +41,7 @@ function Login() {
       setTimeout(() => {
         if (role === "student") navigate("/student", { replace: true });
         else if (role === "technician") navigate("/technician", { replace: true });
-        else if (role === "admin" || role === "administrator")
+        else if (role === "Admin" || role === "administrator")
           navigate("/admin", { replace: true });
         else setMsg("Unknown role: " + res.data.role);
       }, 600);
