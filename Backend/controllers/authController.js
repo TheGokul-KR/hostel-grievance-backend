@@ -24,13 +24,19 @@ const generateOTP = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
 
 const sendOTPEmail = async (email, otp, role) => {
-  return transporter.sendMail({
-    from: "Hostel Grievance & Compliance <thegokul.pc@gmail.com>",
-    to: email,
-    subject: `${role} OTP Verification`,
-    text: `Your ${role} OTP is ${otp}. It expires in 5 minutes.`
-  });
+  try {
+    return await transporter.sendMail({
+      from: "Hostel Grievance & Compliance <thegokul.pc@gmail.com>",
+      to: email,
+      subject: `${role} OTP Verification`,
+      text: `Your ${role} OTP is ${otp}. It expires in 5 minutes.`
+    });
+  } catch (err) {
+    console.error("OTP EMAIL ERROR:", err);
+    throw err;
+  }
 };
+
 
 // =======================================================
 // ================= STUDENT SIGNUP =======================
@@ -104,11 +110,13 @@ exports.verifyStudentSignupOTP = async (req, res) => {
     const student = await StudentMaster.findOne({ regNo: upperReg });
     if (!student) return res.status(400).json({ message: "Student not found" });
 
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     await User.create({
       regNo: student.regNo,
       name: student.name,
       email: student.email.toLowerCase(),
-      password,
+      password: hashedPassword,
       role: "Student",
       roomNumber: student.roomNumber,
       isActive: true,
@@ -134,6 +142,9 @@ exports.verifyStudentSignupOTP = async (req, res) => {
 exports.technicianSignup = async (req, res) => {
   try {
     const { techId, password } = req.body;
+
+    if (!techId || !password)
+      return res.status(400).json({ message: "techId and password required" });
 
     const upperTech = techId.trim().toUpperCase();
 
@@ -202,11 +213,13 @@ exports.verifyTechnicianSignupOTP = async (req, res) => {
     const tech = await TechnicianMaster.findOne({ techId: upperTech });
     if (!tech) return res.status(400).json({ message: "Technician not found" });
 
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     await User.create({
       techId: tech.techId,
       name: tech.name,
       email: tech.email.toLowerCase(),
-      password,
+      password: hashedPassword,
       role: "Technician",
       department: tech.department,
       isActive: true,
@@ -285,13 +298,15 @@ exports.login = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
   try {
     const { identifier } = req.body;
+    const clean = identifier.trim();
 
     const user = await User.findOne({
       $or: [
-        { email: identifier.toLowerCase() },
-        { regNo: identifier.toUpperCase() },
-        { techId: identifier.toUpperCase() }
-      ]
+        { email: clean.toLowerCase() },
+        { regNo: clean.toUpperCase() },
+        { techId: clean.toUpperCase() }
+      ],
+      isDeleted: false
     });
 
     if (!user) return res.status(400).json({ message: "User not found" });
@@ -299,13 +314,13 @@ exports.forgotPassword = async (req, res) => {
     const otp = generateOTP();
 
     await OTP.deleteMany({
-      email: user.email.toLowerCase(),
+      identifier: clean,
       role: user.role,
       purpose: "forgot_password"
     });
 
     await OTP.create({
-      identifier,
+      identifier: clean,
       email: user.email.toLowerCase(),
       role: user.role,
       otp,
@@ -327,11 +342,16 @@ exports.forgotPassword = async (req, res) => {
 // =======================================================
 exports.resetPassword = async (req, res) => {
   try {
-    const { identifier, otp, newPassword } = req.body;
+    const { identifier, otp, newPassword, role } = req.body;
+    if (!role)
+      return res.status(400).json({ message: "Role is required" });
+
+    const clean = identifier.trim();
 
     const record = await OTP.findOne({
-      identifier,
+      identifier: clean,
       otp,
+      role,
       purpose: "forgot_password",
       verified: false,
       expiresAt: { $gt: new Date() }
@@ -341,12 +361,13 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ message: "Invalid or expired OTP" });
 
     const user = await User.findOne({
-      email: record.email.toLowerCase()
+      email: record.email.toLowerCase(),
+      role
     });
 
     if (!user) return res.status(400).json({ message: "User not found" });
 
-    user.password = newPassword;
+    user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
     record.verified = true;
