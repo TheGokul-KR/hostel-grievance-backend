@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import "../styles/technician.css";
 import NotificationBell from "../components/NotificationBell";
 
-const IMAGE_BASE = "http://localhost:3000/uploads/";
+const IMAGE_BASE = import.meta.env.VITE_API_BASE_URL + "/uploads/";
+
 
 const NEXT_STATUS = {
   Pending: "In Progress",

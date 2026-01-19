@@ -3,7 +3,8 @@ import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 import "../styles/StudentComplaintHistory.css";
 
-const IMAGE_BASE = "http://localhost:3000/uploads/";
+const IMAGE_BASE = import.meta.env.VITE_API_BASE_URL + "/uploads/";
+
 
 function StudentComplaintHistory() {
   const [complaints, setComplaints] = useState([]);

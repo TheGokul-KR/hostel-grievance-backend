@@ -4,7 +4,8 @@ import BackButton from "../components/BackButton";
 import api from "../services/api";
 import "../styles/dashboard.css";
 
-const IMAGE_BASE = "http://localhost:3000/uploads/";
+const IMAGE_BASE = import.meta.env.VITE_API_BASE_URL + "/uploads/";
+
 
 function StudentDashboard() {
   const navigate = useNavigate();
