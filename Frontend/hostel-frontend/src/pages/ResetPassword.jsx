@@ -7,7 +7,7 @@ function ResetPassword() {
   const { state } = useLocation();
   const navigate = useNavigate();
 
-  const email = state?.email;
+  const identifier = state?.identifier;
 
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
@@ -16,8 +16,8 @@ function ResetPassword() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!email) navigate("/forgot-password");
-  }, [email, navigate]);
+    if (!identifier) navigate("/forgot-password");
+  }, [identifier, navigate]);
 
   const handleReset = async (e) => {
     e.preventDefault();
@@ -34,9 +34,10 @@ function ResetPassword() {
       setLoading(true);
 
       const res = await api.post("/auth/reset-password", {
-        email: email.toLowerCase(),
+        identifier: identifier.trim(),
         otp,
-        newPassword: password
+        newPassword: password,
+        role: "Student" // backend requires role, we pass generic
       });
 
       setMsg(res.data.message || "Password reset successful");
@@ -67,7 +68,7 @@ function ResetPassword() {
 
         <h3 className="auth-title">Reset Password</h3>
 
-        {msg && <div className="auth-msg">{msg}</div>}
+        {msg && <div className={`auth-msg ${status}`}>{msg}</div>}
 
         <form onSubmit={handleReset} className="auth-form">
 
@@ -75,7 +76,7 @@ function ResetPassword() {
             <input
               required
               value={otp}
-              onChange={(e) => setOtp(e.target.value)}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
             />
             <label>OTP</label>
           </div>
@@ -102,3 +103,4 @@ function ResetPassword() {
 }
 
 export default ResetPassword;
+

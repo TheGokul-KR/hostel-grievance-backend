@@ -9,7 +9,7 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState(""); // success | error | ""
+  const [status, setStatus] = useState("");
 
   const navigate = useNavigate();
 
@@ -21,10 +21,16 @@ function Login() {
     try {
       setLoading(true);
 
+      const cleanId = identifier.trim();
+
       const res = await api.post("/auth/login", {
-        identifier: identifier.trim(),
+        identifier: cleanId,
         password
       });
+
+      if (!res.data?.token || !res.data?.role) {
+        throw new Error("Invalid login response");
+      }
 
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.role);
@@ -32,23 +38,24 @@ function Login() {
       localStorage.setItem("techId", res.data.techId || "");
       localStorage.setItem("name", res.data.name || "");
       localStorage.setItem("roomNumber", res.data.roomNumber || "");
+      localStorage.setItem("department", res.data.department || "");
 
       setStatus("success");
       setMsg("Authentication successful");
 
-      const role = res.data.role?.toLowerCase();
+      const role = res.data.role.toLowerCase();
 
       setTimeout(() => {
         if (role === "student") navigate("/student", { replace: true });
         else if (role === "technician") navigate("/technician", { replace: true });
-        else if (role === "Admin" || role === "administrator")
+        else if (role === "admin" || role === "administrator")
           navigate("/admin", { replace: true });
         else setMsg("Unknown role: " + res.data.role);
       }, 600);
 
     } catch (err) {
       setStatus("error");
-      setMsg(err.response?.data?.message || "Authentication failed");
+      setMsg(err.response?.data?.message || err.message || "Authentication failed");
     } finally {
       setLoading(false);
     }
@@ -57,19 +64,18 @@ function Login() {
   return (
     <div className="auth-bg">
       <div className={`auth-glass ${status}`}>
-<div className="auth-brand">
-  <h1 className="brand-title">
-    Hostel Grievance <span>&</span> Compliance
-  </h1>
-  <h2 className="brand-subtitle">
-    Management System
-  </h2>
-
-</div>
+        <div className="auth-brand">
+          <h1 className="brand-title">
+            Hostel Grievance <span>&</span> Compliance
+          </h1>
+          <h2 className="brand-subtitle">
+            Management System
+          </h2>
+        </div>
 
         <h3 className="auth-title">Secure Login</h3>
 
-        {msg && <div className="auth-msg">{msg}</div>}
+        {msg && <div className={`auth-msg ${status}`}>{msg}</div>}
 
         <form onSubmit={handleLogin} className="auth-form">
 

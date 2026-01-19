@@ -25,15 +25,19 @@ function ForgotPassword() {
     try {
       setLoading(true);
 
+      const cleanEmail = email.trim().toLowerCase();
+
       const res = await api.post("/auth/forgot-password", {
-        email: email.trim().toLowerCase()
+        identifier: cleanEmail
       });
 
       setMsg(res.data.message || "OTP sent successfully");
       setStatus("success");
 
       setTimeout(() => {
-        navigate("/reset-password", { state: { email } });
+        navigate("/reset-password", {
+          state: { identifier: cleanEmail }
+        });
       }, 1200);
 
     } catch (err) {
@@ -59,7 +63,7 @@ function ForgotPassword() {
 
         <h3 className="auth-title">Recover Password</h3>
 
-        {msg && <div className="auth-msg">{msg}</div>}
+        {msg && <div className={`auth-msg ${status}`}>{msg}</div>}
 
         <form onSubmit={handleSendOTP} className="auth-form">
 

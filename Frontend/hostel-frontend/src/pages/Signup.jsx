@@ -6,7 +6,7 @@ import "../styles/auth.css";
 function Signup() {
   const navigate = useNavigate();
 
-  const [role, setRole] = useState("Student"); // Student | Technician
+  const [role, setRole] = useState("Student");
 
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -40,6 +40,10 @@ function Signup() {
     return () => clearInterval(i);
   }, [timer]);
 
+  useEffect(() => {
+    setTimer(0);
+  }, [role]);
+
   // ================= SEND OTP =================
   const handleSendOTP = async (e) => {
     e.preventDefault();
@@ -61,6 +65,8 @@ function Signup() {
     try {
       setLoading(true);
 
+      const cleanId = identifier.trim().toUpperCase();
+
       const endpoint =
         role === "Student"
           ? "/auth/student-signup"
@@ -68,8 +74,8 @@ function Signup() {
 
       const payload =
         role === "Student"
-          ? { regNo: identifier, password }
-          : { techId: identifier, password };
+          ? { regNo: cleanId, password }
+          : { techId: cleanId, password };
 
       const res = await api.post(endpoint, payload);
 
@@ -101,6 +107,8 @@ function Signup() {
     try {
       setLoading(true);
 
+      const cleanId = identifier.trim().toUpperCase();
+
       const endpoint =
         role === "Student"
           ? "/auth/student-verify-otp"
@@ -108,8 +116,8 @@ function Signup() {
 
       const payload =
         role === "Student"
-          ? { regNo: identifier, otp, password }
-          : { techId: identifier, otp, password };
+          ? { regNo: cleanId, otp, password }
+          : { techId: cleanId, otp, password };
 
       const res = await api.post(endpoint, payload);
 
@@ -129,9 +137,13 @@ function Signup() {
 
   // ================= RESEND OTP =================
   const resendOTP = async () => {
-    if (timer > 0) return;
+    if (timer > 0 || loading) return;
 
     try {
+      setLoading(true);
+
+      const cleanId = identifier.trim().toUpperCase();
+
       const endpoint =
         role === "Student"
           ? "/auth/student-signup"
@@ -139,17 +151,19 @@ function Signup() {
 
       const payload =
         role === "Student"
-          ? { regNo: identifier, password }
-          : { techId: identifier, password };
+          ? { regNo: cleanId, password }
+          : { techId: cleanId, password };
 
       await api.post(endpoint, payload);
 
       setTimer(30);
       setMsg("OTP resent");
       setStatus("success");
-    } catch {
-      setMsg("OTP resend failed");
+    } catch (err) {
+      setMsg(err.response?.data?.message || "OTP resend failed");
       setStatus("error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -172,7 +186,7 @@ function Signup() {
           {step === 3 && "Account Created"}
         </h3>
 
-        {msg && <div className="auth-msg">{msg}</div>}
+        {msg && <div className={`auth-msg ${status}`}>{msg}</div>}
 
         {/* STEP 1 */}
         {step === 1 && (
@@ -244,7 +258,7 @@ function Signup() {
               <input
                 required
                 value={otp}
-                onChange={(e) => setOtp(e.target.value)}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
               />
               <label>Enter OTP</label>
             </div>
