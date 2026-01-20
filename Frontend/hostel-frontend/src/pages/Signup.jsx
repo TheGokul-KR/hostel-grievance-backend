@@ -21,6 +21,19 @@ function Signup() {
 
   const [timer, setTimer] = useState(0);
 
+  // ================= RESTORE STATE =================
+  useEffect(() => {
+    const saved = sessionStorage.getItem("signup_data");
+    if (saved) {
+      const d = JSON.parse(saved);
+      setRole(d.role);
+      setIdentifier(d.identifier);
+      setPassword(d.password);
+      setConfirm(d.password);
+      setStep(d.step || 1);
+    }
+  }, []);
+
   // ================= PASSWORD STRENGTH =================
   const passwordStrength = () => {
     let score = 0;
@@ -79,13 +92,24 @@ function Signup() {
 
       const res = await api.post(endpoint, payload);
 
+      if (!res.data || !res.data.message) {
+        throw new Error("OTP not sent properly");
+      }
+
+      sessionStorage.setItem("signup_data", JSON.stringify({
+        role,
+        identifier: cleanId,
+        password,
+        step: 2
+      }));
+
       setMsg(res.data.message || "OTP sent");
       setStatus("success");
       setStep(2);
       setTimer(30);
 
     } catch (err) {
-      setMsg(err.response?.data?.message || "OTP send failed");
+      setMsg(err.response?.data?.message || err.message || "OTP send failed");
       setStatus("error");
     } finally {
       setLoading(false);
@@ -98,8 +122,8 @@ function Signup() {
     setMsg("");
     setStatus("");
 
-    if (!otp) {
-      setMsg("Enter OTP");
+    if (!otp || otp.length !== 6) {
+      setMsg("Enter valid 6 digit OTP");
       setStatus("error");
       return;
     }
@@ -121,6 +145,12 @@ function Signup() {
 
       const res = await api.post(endpoint, payload);
 
+      if (!res.data || !res.data.message) {
+        throw new Error("Account not created");
+      }
+
+      sessionStorage.removeItem("signup_data");
+
       setMsg(res.data.message || "Account created");
       setStatus("success");
       setStep(3);
@@ -128,7 +158,7 @@ function Signup() {
       setTimeout(() => navigate("/"), 1600);
 
     } catch (err) {
-      setMsg(err.response?.data?.message || "OTP verification failed");
+      setMsg(err.response?.data?.message || err.message || "OTP verification failed");
       setStatus("error");
     } finally {
       setLoading(false);
@@ -148,6 +178,8 @@ function Signup() {
         role === "Student"
           ? "/auth/student-signup"
           : "/auth/technician-signup";
+
+
 
       const payload =
         role === "Student"
@@ -188,7 +220,6 @@ function Signup() {
 
         {msg && <div className={`auth-msg ${status}`}>{msg}</div>}
 
-        {/* STEP 1 */}
         {step === 1 && (
           <form onSubmit={handleSendOTP} className="auth-form">
 
@@ -250,13 +281,13 @@ function Signup() {
           </form>
         )}
 
-        {/* STEP 2 */}
         {step === 2 && (
           <form onSubmit={handleVerifyOTP} className="auth-form">
 
             <div className="input-group">
               <input
                 required
+                maxLength={6}
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
               />
@@ -283,7 +314,6 @@ function Signup() {
           </form>
         )}
 
-        {/* STEP 3 */}
         {step === 3 && (
           <div style={{ textAlign: "center", color: "#22c55e", fontWeight: 700 }}>
             🎉 Account created successfully

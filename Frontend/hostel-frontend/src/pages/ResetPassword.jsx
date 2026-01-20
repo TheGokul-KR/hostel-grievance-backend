@@ -7,7 +7,8 @@ function ResetPassword() {
   const { state } = useLocation();
   const navigate = useNavigate();
 
-  const identifier = state?.identifier;
+  const identifier =
+    state?.identifier || sessionStorage.getItem("reset_identifier");
 
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
@@ -37,11 +38,13 @@ function ResetPassword() {
         identifier: identifier.trim(),
         otp,
         newPassword: password,
-        role: "Student" // backend requires role, we pass generic
+        role: "Student" // unchanged (your backend requires role)
       });
 
       setMsg(res.data.message || "Password reset successful");
       setStatus("success");
+
+      sessionStorage.removeItem("reset_identifier");
 
       setTimeout(() => navigate("/"), 1500);
 
@@ -103,4 +106,3 @@ function ResetPassword() {
 }
 
 export default ResetPassword;
-

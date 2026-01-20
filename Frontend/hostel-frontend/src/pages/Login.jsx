@@ -28,8 +28,8 @@ function Login() {
         password
       });
 
-      if (!res.data?.token || !res.data?.role) {
-        throw new Error("Invalid login response");
+      if (!res.data || !res.data.token || !res.data.role) {
+        throw new Error("Invalid server response");
       }
 
       localStorage.setItem("token", res.data.token);
@@ -50,12 +50,19 @@ function Login() {
         else if (role === "technician") navigate("/technician", { replace: true });
         else if (role === "admin" || role === "administrator")
           navigate("/admin", { replace: true });
-        else setMsg("Unknown role: " + res.data.role);
+        else {
+          setStatus("error");
+          setMsg("Unknown role: " + res.data.role);
+        }
       }, 600);
 
     } catch (err) {
       setStatus("error");
-      setMsg(err.response?.data?.message || err.message || "Authentication failed");
+      setMsg(
+        err.response?.data?.message ||
+        err.message ||
+        "Authentication failed"
+      );
     } finally {
       setLoading(false);
     }
