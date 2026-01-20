@@ -5,6 +5,12 @@ import "../styles/StudentComplaintHistory.css";
 
 const IMAGE_BASE = import.meta.env.VITE_API_BASE_URL + "/uploads/";
 
+// ================= IMAGE NORMALIZER =================
+const normalizeImage = (img) => {
+  if (!img) return "";
+  if (img.startsWith("http")) return img;
+  return IMAGE_BASE + encodeURIComponent(img);
+};
 
 function StudentComplaintHistory() {
   const [complaints, setComplaints] = useState([]);
@@ -24,6 +30,7 @@ function StudentComplaintHistory() {
 
   const navigate = useNavigate();
 
+  // ================= AUTH GUARD =================
   useEffect(() => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
@@ -61,10 +68,8 @@ function StudentComplaintHistory() {
     }
   };
 
-  const formatImg = (img) =>
-    img?.startsWith("http") ? img : IMAGE_BASE + img;
-
   const openDetail = (c) => {
+    if (!c) return;
     setSelected(c);
     setRating(c.rating || 0);
     setFeedback(c.ratingFeedback || "");
@@ -103,7 +108,7 @@ function StudentComplaintHistory() {
   };
 
   const submitRating = async () => {
-    if (!rating) return alert("Select rating");
+    if (!rating || !selected?._id) return alert("Select rating");
 
     await api.patch(`/complaints/${selected._id}/rate`, {
       rating,
@@ -141,7 +146,7 @@ function StudentComplaintHistory() {
                   onClick={() => openDetail(c)}
                 >
                   <b>{c.status}</b>
-                  <p>{c.complaintText.slice(0, 80)}...</p>
+                  <p>{(c.complaintText || "").slice(0, 80)}...</p>
                   <small>Room {c.roomNumber}</small>
                 </div>
               ))}
@@ -161,15 +166,17 @@ function StudentComplaintHistory() {
             <p><b>Status:</b> {selected.status}</p>
             <p><b>Technician:</b> {selected.technicianNameSnapshot || "Not assigned"}</p>
 
-            <div className="detail-box">{selected.complaintText}</div>
+            <div className="detail-box">
+              {selected.complaintText || ""}
+            </div>
 
-            {selected.images?.length > 0 && (
+            {Array.isArray(selected.images) && selected.images.length > 0 && (
               <div className="admin-image-grid">
-                {selected.images.map((img,i)=>(
+                {selected.images.map((img, i) => (
                   <img
                     key={i}
-                    src={formatImg(img)}
-                    onClick={()=>setPreviewImg(formatImg(img))}
+                    src={normalizeImage(img)}
+                    onClick={() => setPreviewImg(normalizeImage(img))}
                   />
                 ))}
               </div>
@@ -184,31 +191,32 @@ function StudentComplaintHistory() {
 
             <div className="audit-box">
               <b>Audit Trail</b>
-              {selected.statusHistory?.map((s,i)=>(
-                <div key={i} className="audit-row">
-                  <span>{s.status}</span>
-                  <small>{s.changedByRole}</small>
-                </div>
-              ))}
+              {Array.isArray(selected.statusHistory) &&
+                selected.statusHistory.map((s, i) => (
+                  <div key={i} className="audit-row">
+                    <span>{s.status}</span>
+                    <small>{s.changedByRole}</small>
+                  </div>
+                ))}
             </div>
 
-            {selected.status==="Resolved" && selected.studentConfirmation==="Pending" && (
+            {selected.status === "Resolved" && selected.studentConfirmation === "Pending" && (
               <div className="action-box">
-                <button onClick={()=>handleConfirm(selected._id)}>Confirm</button>
-                <button onClick={()=>handleReject(selected._id)}>Reject</button>
+                <button onClick={() => handleConfirm(selected._id)}>Confirm</button>
+                <button onClick={() => handleReject(selected._id)}>Reject</button>
               </div>
             )}
 
-            {selected.status==="Completed" && (
+            {selected.status === "Completed" && (
               <div className="rating-box">
 
-                {[1,2,3,4,5].map(star=>(
+                {[1, 2, 3, 4, 5].map(star => (
                   <span
                     key={star}
                     className={`star ${star <= (hover || rating) ? "filled" : ""}`}
-                    onMouseEnter={()=>!ratingDone&&setHover(star)}
-                    onMouseLeave={()=>!ratingDone&&setHover(0)}
-                    onClick={()=>!ratingDone&&setRating(star)}
+                    onMouseEnter={() => !ratingDone && setHover(star)}
+                    onMouseLeave={() => !ratingDone && setHover(0)}
+                    onClick={() => !ratingDone && setRating(star)}
                   >
                     ★
                   </span>
@@ -218,7 +226,7 @@ function StudentComplaintHistory() {
                   placeholder="Write your feedback..."
                   value={feedback}
                   disabled={ratingDone}
-                  onChange={e=>setFeedback(e.target.value)}
+                  onChange={e => setFeedback(e.target.value)}
                 />
 
                 {!ratingDone && (
@@ -235,8 +243,8 @@ function StudentComplaintHistory() {
       </div>
 
       {previewImg && (
-        <div className="image-modal" onClick={()=>setPreviewImg(null)}>
-          <img src={previewImg}/>
+        <div className="image-modal" onClick={() => setPreviewImg(null)}>
+          <img src={previewImg} />
         </div>
       )}
     </div>

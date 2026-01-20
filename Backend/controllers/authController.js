@@ -37,7 +37,6 @@ const sendOTPEmail = async (email, otp, role) => {
   }
 };
 
-
 // =======================================================
 // ================= STUDENT SIGNUP =======================
 // =======================================================
@@ -51,7 +50,7 @@ exports.studentSignup = async (req, res) => {
 
     const student = await StudentMaster.findOne({
       regNo: upperReg,
-      isDeleted: false
+      $or: [{ isDeleted: false }, { isDeleted: { $exists: false } }]
     });
 
     if (!student) return res.status(400).json({ message: "Student not found" });
@@ -107,16 +106,18 @@ exports.verifyStudentSignupOTP = async (req, res) => {
     if (!record)
       return res.status(400).json({ message: "Invalid or expired OTP" });
 
-    const student = await StudentMaster.findOne({ regNo: upperReg });
-    if (!student) return res.status(400).json({ message: "Student not found" });
+    const student = await StudentMaster.findOne({
+      regNo: upperReg,
+      $or: [{ isDeleted: false }, { isDeleted: { $exists: false } }]
+    });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    if (!student) return res.status(400).json({ message: "Student not found" });
 
     await User.create({
       regNo: student.regNo,
       name: student.name,
       email: student.email.toLowerCase(),
-      password: hashedPassword,
+      password: password, // FIXED
       role: "Student",
       roomNumber: student.roomNumber,
       isActive: true,
@@ -150,7 +151,7 @@ exports.technicianSignup = async (req, res) => {
 
     const tech = await TechnicianMaster.findOne({
       techId: upperTech,
-      isDeleted: false
+      $or: [{ isDeleted: false }, { isDeleted: { $exists: false } }]
     });
 
     if (!tech) return res.status(400).json({ message: "Technician not found" });
@@ -210,16 +211,18 @@ exports.verifyTechnicianSignupOTP = async (req, res) => {
     if (!record)
       return res.status(400).json({ message: "Invalid or expired OTP" });
 
-    const tech = await TechnicianMaster.findOne({ techId: upperTech });
-    if (!tech) return res.status(400).json({ message: "Technician not found" });
+    const tech = await TechnicianMaster.findOne({
+      techId: upperTech,
+      $or: [{ isDeleted: false }, { isDeleted: { $exists: false } }]
+    });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    if (!tech) return res.status(400).json({ message: "Technician not found" });
 
     await User.create({
       techId: tech.techId,
       name: tech.name,
       email: tech.email.toLowerCase(),
-      password: hashedPassword,
+      password: password, // FIXED
       role: "Technician",
       department: tech.department,
       isActive: true,
@@ -249,15 +252,22 @@ exports.login = async (req, res) => {
     const clean = identifier.trim();
 
     const user = await User.findOne({
-      $or: [
-        { regNo: clean.toUpperCase() },
-        { techId: clean.toUpperCase() },
-        { email: clean.toLowerCase() }
-      ],
-      isDeleted: false
+      $and: [
+        {
+          $or: [
+            { regNo: clean.toUpperCase() },
+            { techId: clean.toUpperCase() },
+            { email: clean.toLowerCase() }
+          ]
+        },
+        {
+          $or: [{ isDeleted: false }, { isDeleted: { $exists: false } }]
+        }
+      ]
     }).select("+password");
 
     if (!user) return res.status(400).json({ message: "Invalid account" });
+
     if (!user.isActive)
       return res.status(403).json({ message: "Account disabled" });
 
@@ -301,12 +311,18 @@ exports.forgotPassword = async (req, res) => {
     const clean = identifier.trim();
 
     const user = await User.findOne({
-      $or: [
-        { email: clean.toLowerCase() },
-        { regNo: clean.toUpperCase() },
-        { techId: clean.toUpperCase() }
-      ],
-      isDeleted: false
+      $and: [
+        {
+          $or: [
+            { email: clean.toLowerCase() },
+            { regNo: clean.toUpperCase() },
+            { techId: clean.toUpperCase() }
+          ]
+        },
+        {
+          $or: [{ isDeleted: false }, { isDeleted: { $exists: false } }]
+        }
+      ]
     });
 
     if (!user) return res.status(400).json({ message: "User not found" });
@@ -367,7 +383,7 @@ exports.resetPassword = async (req, res) => {
 
     if (!user) return res.status(400).json({ message: "User not found" });
 
-    user.password = await bcrypt.hash(newPassword, 10);
+    user.password = newPassword; // FIXED
     await user.save();
 
     record.verified = true;

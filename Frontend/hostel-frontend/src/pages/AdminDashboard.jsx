@@ -1,10 +1,16 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 import "../styles/admin.css";
 
-const IMAGE_BASE = import.meta.env.VITE_API_BASE_URL + "/uploads/";
+const IMAGE_BASE = import.meta.env.VITE_API_BASE_URL.replace(/\/api$/, "") + "/uploads/";
 
+// ================= IMAGE NORMALIZER =================
+const normalizeImage = (img) => {
+  if (!img) return "";
+  if (img.startsWith("http")) return img;
+  return IMAGE_BASE + encodeURIComponent(img);
+};
 
 function AdminDashboard() {
   const [all, setAll] = useState([]);
@@ -17,9 +23,13 @@ function AdminDashboard() {
   const [remark, setRemark] = useState("");
   const [search, setSearch] = useState("");
 
+  const selectedIdRef = useRef(null);
+  const pageRef = useRef("NORMAL");
+
   const navigate = useNavigate();
   const role = localStorage.getItem("role")?.toLowerCase();
 
+  // ================= AUTH GUARD =================
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token || role !== "admin") {
@@ -27,17 +37,34 @@ function AdminDashboard() {
     }
   }, [navigate, role]);
 
+  // ================= FETCH =================
   const fetchData = async () => {
     const [a, r] = await Promise.all([
       api.get("/complaints/admin/all"),
       api.get("/complaints/admin/ragging")
     ]);
-    setAll(a.data || []);
-    setRagging(r.data || []);
+
+    const allList = Array.isArray(a.data) ? a.data : [];
+    const ragList = Array.isArray(r.data) ? r.data : [];
+
+    setAll(allList);
+    setRagging(ragList);
+
+    if (selectedIdRef.current) {
+      const found =
+        allList.find(c => c._id === selectedIdRef.current) ||
+        ragList.find(c => c._id === selectedIdRef.current);
+
+      if (found) setSelected(found);
+      else setSelected(null);
+    }
   };
 
+  // ================= AUTO REFRESH =================
   useEffect(() => {
     fetchData();
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -48,9 +75,6 @@ function AdminDashboard() {
     localStorage.clear();
     navigate("/");
   };
-
-  const formatImg = img =>
-    img?.startsWith("http") ? img : IMAGE_BASE + img;
 
   const overdue = all.filter(c => c.isOverdue);
 
@@ -68,7 +92,7 @@ function AdminDashboard() {
 
   const reloadSelected = async id => {
     const res = await api.get("/complaints/admin/all");
-    const list = res.data || [];
+    const list = Array.isArray(res.data) ? res.data : [];
     setAll(list);
     const updated = list.find(c => c._id === id);
     if (updated) setSelected(updated);
@@ -81,6 +105,7 @@ function AdminDashboard() {
   };
 
   const saveRemark = async () => {
+    if (!selected?._id) return;
     await api.patch(`/complaints/admin/ragging/${selected._id}/remark`, {
       remark
     });
@@ -129,9 +154,9 @@ function AdminDashboard() {
       <div className="admin-layout">
 
         <div className="admin-menu">
-          <div onClick={() => { setPage("NORMAL"); setSelected(null); }}>📄 Complaints</div>
-          <div onClick={() => { setPage("RAGGING"); setSelected(null); }}>🚨 Ragging</div>
-          <div onClick={() => { setPage("OVERDUE"); setSelected(null); }}>⏱ Overdue</div>
+          <div onClick={() => { setPage("NORMAL"); pageRef.current="NORMAL"; setSelected(null); }}>📄 Complaints</div>
+          <div onClick={() => { setPage("RAGGING"); pageRef.current="RAGGING"; setSelected(null); }}>🚨 Ragging</div>
+          <div onClick={() => { setPage("OVERDUE"); pageRef.current="OVERDUE"; setSelected(null); }}>⏱ Overdue</div>
           <hr/>
           <div onClick={() => navigate("/admin/students")}>👨‍🎓 Students</div>
           <div onClick={() => navigate("/admin/technicians")}>🛠 Technicians</div>
@@ -153,9 +178,12 @@ function AdminDashboard() {
 />
 
 {!selected && filteredAll.map(c => (
-<div key={c._id} className="admin-card" onClick={() => setSelected(c)}>
+<div key={c._id} className="admin-card" onClick={() => {
+  selectedIdRef.current = c._id;
+  setSelected(c);
+}}>
 <b>{c.category}</b> — {c.status}
-<p>{c.complaintText.slice(0,120)}...</p>
+<p>{(c.complaintText || "").slice(0,120)}...</p>
 </div>
 ))}
 
@@ -176,29 +204,29 @@ function AdminDashboard() {
 <p><b>Category:</b> {selected.category}</p>
 <p><b>Technician:</b> {selected.technicianNameSnapshot || "Auto assigned"}</p>
 
-<div className="detail-text">{selected.complaintText}</div>
+<div className="detail-text">{selected.complaintText || ""}</div>
 
-{selected.images?.length > 0 && (
+{Array.isArray(selected.images) && selected.images.length > 0 && (
 <div className="image-grid">
 {selected.images.map((img,i)=>(
 <img
   key={i}
-  src={formatImg(img)}
-  onClick={() => setPreviewImg(formatImg(img))}
+  src={normalizeImage(img)}
+  onClick={() => setPreviewImg(normalizeImage(img))}
 />
 ))}
 </div>
 )}
 
-{selected.repairImages?.length > 0 && (
+{Array.isArray(selected.repairImages) && selected.repairImages.length > 0 && (
 <>
 <h4>Repair Evidence</h4>
 <div className="image-grid">
 {selected.repairImages.map((img,i)=>(
 <img
   key={i}
-  src={formatImg(img)}
-  onClick={() => setPreviewImg(formatImg(img))}
+  src={normalizeImage(img)}
+  onClick={() => setPreviewImg(normalizeImage(img))}
 />
 ))}
 </div>
@@ -214,7 +242,7 @@ function AdminDashboard() {
 
 <div className="timeline-box">
 <h4>Timeline</h4>
-{selected.statusHistory?.length > 0 ? (
+{Array.isArray(selected.statusHistory) && selected.statusHistory.length > 0 ? (
 selected.statusHistory.map((s,i)=>(
 <div key={i}>
 <b>{s.status}</b> — {s.changedByRole}
@@ -237,7 +265,7 @@ selected.statusHistory.map((s,i)=>(
 
 {!selected && ragging.map(c=>(
 <div key={c._id} className="ragging-card" onClick={()=>setSelected(c)}>
-<p>{c.complaintText.slice(0,120)}...</p>
+<p>{(c.complaintText || "").slice(0,120)}...</p>
 <small>{c.adminReviewed ? "Reviewed" : "Pending Review"}</small>
 </div>
 ))}
@@ -247,18 +275,17 @@ selected.statusHistory.map((s,i)=>(
 
 <button onClick={()=>setSelected(null)}>⬅ Back</button>
 
-<div className="detail-text">{selected.complaintText}</div>
+<div className="detail-text">{selected.complaintText || ""}</div>
 
-{/* 🔥 RAGGING PHOTOS — ADMIN ONLY */}
-{selected.images?.length > 0 && (
+{Array.isArray(selected.images) && selected.images.length > 0 && (
 <>
 <h4>Ragging Evidence Images</h4>
 <div className="image-grid">
 {selected.images.map((img,i)=>(
 <img
   key={i}
-  src={formatImg(img)}
-  onClick={()=>setPreviewImg(formatImg(img))}
+  src={normalizeImage(img)}
+  onClick={()=>setPreviewImg(normalizeImage(img))}
 />
 ))}
 </div>
@@ -299,7 +326,7 @@ Save Remark
   onClick={()=>{setSelected(c);setPage("NORMAL")}}
 >
 <b>{c.category}</b> — {c.status}
-<p>{c.complaintText.slice(0,120)}...</p>
+<p>{(c.complaintText || "").slice(0,120)}...</p>
 </div>
 ))}
 

@@ -9,8 +9,11 @@ if (!BASE_URL) {
 const api = axios.create({
   baseURL: BASE_URL ? BASE_URL.replace(/\/$/, "") + "/api" : "",
   timeout: 15000,
-  withCredentials: true // 🔥 REQUIRED for CORS with credentials
+  withCredentials: true
 });
+
+// ❌ DO NOT FORCE CONTENT-TYPE HERE
+// Axios must auto-detect multipart/form-data for FormData uploads
 
 // ================= REQUEST =================
 api.interceptors.request.use(
@@ -19,6 +22,11 @@ api.interceptors.request.use(
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // ⚠️ If sending FormData, remove content-type so browser sets boundary
+    if (config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
     }
 
     return config;
@@ -38,7 +46,12 @@ api.interceptors.response.use(
         error.response.status,
         error.response.data
       );
+
+      if (error.response.status === 401) {
+        console.warn("Token rejected by server");
+      }
     }
+
     return Promise.reject(error);
   }
 );

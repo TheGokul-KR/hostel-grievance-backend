@@ -1,17 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 import "../styles/technician.css";
 import NotificationBell from "../components/NotificationBell";
 
-const IMAGE_BASE = import.meta.env.VITE_API_BASE_URL + "/uploads/";
-
+const IMAGE_BASE = import.meta.env.VITE_API_BASE_URL
+  ? import.meta.env.VITE_API_BASE_URL.replace(/\/api$/, "") + "/uploads/"
+  : "http://localhost:5000/uploads/";
 
 const NEXT_STATUS = {
   Pending: "In Progress",
   "In Progress": "Resolved",
   Resolved: null,
   Completed: null
+};
+
+const normalizeImage = (img) => {
+  if (!img) return "";
+  if (img.startsWith("http")) return img;
+  return IMAGE_BASE + encodeURIComponent(img);
 };
 
 function TechnicianDashboard() {
@@ -29,12 +36,14 @@ function TechnicianDashboard() {
   const [previewImage, setPreviewImage] = useState(null);
 
   const navigate = useNavigate();
+  const selectedIdRef = useRef(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
 
     if (!token || role?.toLowerCase() !== "technician") {
+      localStorage.clear();
       navigate("/", { replace: true });
     }
   }, [navigate]);
@@ -42,7 +51,25 @@ function TechnicianDashboard() {
   const fetchComplaints = async () => {
     try {
       const res = await api.get("/complaints/technician");
-      setComplaints(Array.isArray(res.data) ? res.data : []);
+      const list = Array.isArray(res.data) ? res.data : [];
+      setComplaints(list);
+
+      if (selectedIdRef.current) {
+        const found = list.find(c => c._id === selectedIdRef.current);
+        if (found) {
+          setSelectedComplaint(found);
+          return;
+        } else {
+          selectedIdRef.current = null;
+          setSelectedComplaint(null);
+        }
+      }
+
+      if (!selectedIdRef.current && list.length > 0) {
+        setSelectedComplaint(list[0]);
+        selectedIdRef.current = list[0]._id;
+      }
+
     } catch {
       setComplaints([]);
     }
@@ -50,21 +77,29 @@ function TechnicianDashboard() {
 
   useEffect(() => {
     fetchComplaints();
+    const interval = setInterval(fetchComplaints, 5000);
+    return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const filteredCount = complaints.filter(c =>
+      (statusFilter === "All" || c.status === statusFilter) &&
+      (
+        (c.complaintText || "").toLowerCase().includes(search.toLowerCase()) ||
+        (c.roomNumber || "").toLowerCase().includes(search.toLowerCase())
+      )
+    ).length;
+
+    if (complaints.length > 0 && filteredCount === 0) {
+      setStatusFilter("All");
+      setSearch("");
+    }
+  }, [complaints, statusFilter, search]);
 
   const loadSimilar = async (id) => {
     try {
       await api.get(`/complaints/similar/${id}`);
     } catch {}
-  };
-
-  const reloadAndSelect = async (id) => {
-    const res = await api.get("/complaints/technician");
-    const list = Array.isArray(res.data) ? res.data : [];
-    setComplaints(list);
-
-    const updated = list.find(c => c._id === id);
-    setSelectedComplaint(updated || null);
   };
 
   const updateStatus = async (id, status) => {
@@ -75,7 +110,7 @@ function TechnicianDashboard() {
         solutionSummary
       });
       setSolutionSummary("");
-      await reloadAndSelect(id);
+      await fetchComplaints();
     } catch (err) {
       alert(err.response?.data?.message || "Status update failed");
     }
@@ -96,10 +131,6 @@ function TechnicianDashboard() {
       (txt.includes(s) || room.includes(s))
     );
   });
-
-  // 🔥 ONLY REAL FIX HERE
-  const ratingValue = selectedComplaint?.rating ?? null;
-  const feedbackValue = selectedComplaint?.ratingFeedback ?? null;
 
   return (
     <div className="tech-bg">
@@ -126,7 +157,6 @@ function TechnicianDashboard() {
       <div className="tech-layout">
 
         <div className="tech-list">
-
           <div className="tech-search-filter">
             <input
               className="tech-search"
@@ -152,6 +182,7 @@ function TechnicianDashboard() {
               key={c._id}
               className={`tech-card glass-card ${selectedComplaint?._id === c._id ? "active" : ""}`}
               onClick={() => {
+                selectedIdRef.current = c._id;
                 setSelectedComplaint(c);
                 loadSimilar(c._id);
               }}
@@ -161,7 +192,9 @@ function TechnicianDashboard() {
                 <span className="room">Room {c.roomNumber}</span>
               </div>
 
-              <p className="card-title">{c.complaintText.slice(0, 80)}...</p>
+              <p className="card-title">
+                {(c.complaintText || "").slice(0, 80)}...
+              </p>
 
               <small className="card-meta">
                 {c.priority} Priority • {c.category}
@@ -178,7 +211,9 @@ function TechnicianDashboard() {
             <>
               <h3 className="detail-title">Complaint Detail</h3>
 
-              <div className="detail-box">{selectedComplaint.complaintText}</div>
+              <div className="detail-box">
+                {selectedComplaint.complaintText || ""}
+              </div>
 
               <div className="detail-row">
                 <span><b>Category:</b> {selectedComplaint.category}</span>
@@ -189,53 +224,20 @@ function TechnicianDashboard() {
                 <div className="repair-preview">
                   <h4>Student Evidence</h4>
 
-                  {selectedComplaint.images?.length > 0 ? (
+                  {Array.isArray(selectedComplaint.images) && selectedComplaint.images.length > 0 ? (
                     <div className="repair-grid">
                       {selectedComplaint.images.map((img, i) => (
                         <img
                           key={i}
-                          src={`${IMAGE_BASE}${encodeURIComponent(img)}`}
+                          src={normalizeImage(img)}
                           className="repair-thumb"
-                          onClick={() =>
-                            setPreviewImage(`${IMAGE_BASE}${encodeURIComponent(img)}`)
-                          }
+                          onClick={() => setPreviewImage(normalizeImage(img))}
                         />
                       ))}
                     </div>
                   ) : (
                     <p className="muted">No student images uploaded</p>
                   )}
-                </div>
-              )}
-
-              {selectedComplaint.statusHistory?.length > 0 && (
-                <div className="timeline-box">
-                  <h4>Status Timeline</h4>
-                  {selectedComplaint.statusHistory.map((t, i) => (
-                    <div key={i} className="timeline-item">
-                      <span>{t.status}</span>
-                      <small>
-                        {new Date(t.changedAt || t.updatedAt || Date.now()).toLocaleString()}
-                      </small>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {ratingValue !== null && (
-                <div className="rating-box">
-                  <h4>Student Rating</h4>
-                  <div className="stars">
-                    {"★".repeat(ratingValue)}
-                    {"☆".repeat(5 - ratingValue)}
-                  </div>
-                </div>
-              )}
-
-              {feedbackValue && (
-                <div className="feedback-box">
-                  <h4>Student Feedback</h4>
-                  <p>{feedbackValue}</p>
                 </div>
               )}
 

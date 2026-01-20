@@ -102,11 +102,8 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-
-
 // ================= INDEX RULES =================
 
-// Student regNo unique
 userSchema.index(
   { regNo: 1 },
   {
@@ -119,7 +116,6 @@ userSchema.index(
   }
 );
 
-// Technician techId unique
 userSchema.index(
   { techId: 1 },
   {
@@ -132,7 +128,6 @@ userSchema.index(
   }
 );
 
-// Email unique per role
 userSchema.index(
   { email: 1, role: 1 },
   {
@@ -141,12 +136,9 @@ userSchema.index(
   }
 );
 
-
-
 // ================= VALIDATION =================
 
 userSchema.pre("validate", function () {
-
   if (this.role === "Student" && !this.regNo) {
     throw new Error("Student must have regNo");
   }
@@ -158,29 +150,25 @@ userSchema.pre("validate", function () {
   if (!this.email) {
     throw new Error("User must have email");
   }
-
 });
-
-
 
 // ================= PASSWORD HASH =================
 
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
 
+  // prevent double hashing
+  if (this.password.startsWith("$2")) return;
+
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
-
-
 
 // ================= METHODS =================
 
 userSchema.methods.comparePassword = async function (plain) {
   return bcrypt.compare(plain, this.password);
 };
-
-
 
 // ================= JSON CLEAN =================
 
@@ -192,8 +180,6 @@ userSchema.set("toJSON", {
     return ret;
   }
 });
-
-
 
 // ================= EXPORT =================
 

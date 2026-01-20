@@ -26,8 +26,10 @@ function TechnicianRadar() {
   };
 
   useEffect(() => {
-    fetchComplaints();
-  }, []);
+  fetchComplaints();
+  const interval = setInterval(fetchComplaints, 5000);
+  return () => clearInterval(interval);
+}, []);
 
   const now = Date.now();
 
