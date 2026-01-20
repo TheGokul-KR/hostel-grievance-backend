@@ -233,3 +233,67 @@ h2{
     padding:18px;
   }
 }
+.animated-fade{
+  animation:fadeUp .5s ease;
+}
+
+.glass{
+  background:rgba(255,255,255,.85);
+  backdrop-filter:blur(10px);
+  border-radius:14px;
+}
+
+.primary-btn{
+  background:linear-gradient(135deg,#6366f1,#8b5cf6);
+  color:white;
+  border:none;
+  padding:10px;
+  border-radius:10px;
+  font-weight:700;
+}
+
+.primary-btn:hover{
+  transform:translateY(-2px);
+}
+
+.table-wrapper{
+  overflow-x:auto;
+}
+
+.row-hover:hover{
+  background:#f1f5ff;
+  transition:.3s;
+}
+
+.loading-text{
+  text-align:center;
+  color:#64748b;
+}
+
+.toast-msg{
+  position:fixed;
+  bottom:30px;
+  right:30px;
+  background:#22c55e;
+  color:white;
+  padding:12px 20px;
+  border-radius:12px;
+  font-weight:700;
+  animation:toastIn .4s ease;
+  z-index:9999;
+}
+
+@keyframes toastIn{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* MOBILE */
+@media(max-width:700px){
+  .admin-form{
+    grid-template-columns:1fr;
+  }
+  .admin-table{
+    font-size:12px;
+  }
+}

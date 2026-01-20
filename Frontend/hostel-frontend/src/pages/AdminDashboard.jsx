@@ -3,9 +3,9 @@ import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 import "../styles/admin.css";
 
-const IMAGE_BASE = import.meta.env.VITE_API_BASE_URL.replace(/\/api$/, "") + "/uploads/";
+const IMAGE_BASE =
+  import.meta.env.VITE_API_BASE_URL.replace(/\/api$/, "") + "/uploads/";
 
-// ================= IMAGE NORMALIZER =================
 const normalizeImage = (img) => {
   if (!img) return "";
   if (img.startsWith("http")) return img;
@@ -24,12 +24,10 @@ function AdminDashboard() {
   const [search, setSearch] = useState("");
 
   const selectedIdRef = useRef(null);
-  const pageRef = useRef("NORMAL");
 
   const navigate = useNavigate();
   const role = localStorage.getItem("role")?.toLowerCase();
 
-  // ================= AUTH GUARD =================
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token || role !== "admin") {
@@ -37,30 +35,33 @@ function AdminDashboard() {
     }
   }, [navigate, role]);
 
-  // ================= FETCH =================
   const fetchData = async () => {
-    const [a, r] = await Promise.all([
-      api.get("/complaints/admin/all"),
-      api.get("/complaints/admin/ragging")
-    ]);
+    try {
+      const [a, r] = await Promise.all([
+        api.get("/complaints/admin/all"),
+        api.get("/complaints/admin/ragging")
+      ]);
 
-    const allList = Array.isArray(a.data) ? a.data : [];
-    const ragList = Array.isArray(r.data) ? r.data : [];
+      const allList = Array.isArray(a.data) ? a.data : [];
+      const ragList = Array.isArray(r.data) ? r.data : [];
 
-    setAll(allList);
-    setRagging(ragList);
+      setAll(allList);
+      setRagging(ragList);
 
-    if (selectedIdRef.current) {
-      const found =
-        allList.find(c => c._id === selectedIdRef.current) ||
-        ragList.find(c => c._id === selectedIdRef.current);
+      if (selectedIdRef.current) {
+        const found =
+          allList.find(c => c._id === selectedIdRef.current) ||
+          ragList.find(c => c._id === selectedIdRef.current);
 
-      if (found) setSelected(found);
-      else setSelected(null);
+        if (found) setSelected(found);
+        else setSelected(null);
+      }
+    } catch {
+      setAll([]);
+      setRagging([]);
     }
   };
 
-  // ================= AUTO REFRESH =================
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 5000);
@@ -154,9 +155,9 @@ function AdminDashboard() {
       <div className="admin-layout">
 
         <div className="admin-menu">
-          <div onClick={() => { setPage("NORMAL"); pageRef.current="NORMAL"; setSelected(null); }}>📄 Complaints</div>
-          <div onClick={() => { setPage("RAGGING"); pageRef.current="RAGGING"; setSelected(null); }}>🚨 Ragging</div>
-          <div onClick={() => { setPage("OVERDUE"); pageRef.current="OVERDUE"; setSelected(null); }}>⏱ Overdue</div>
+          <div onClick={() => { setPage("NORMAL"); setSelected(null); }}>📄 Complaints</div>
+          <div onClick={() => { setPage("RAGGING"); setSelected(null); }}>🚨 Ragging</div>
+          <div onClick={() => { setPage("OVERDUE"); setSelected(null); }}>⏱ Overdue</div>
           <hr/>
           <div onClick={() => navigate("/admin/students")}>👨‍🎓 Students</div>
           <div onClick={() => navigate("/admin/technicians")}>🛠 Technicians</div>
@@ -209,11 +210,7 @@ function AdminDashboard() {
 {Array.isArray(selected.images) && selected.images.length > 0 && (
 <div className="image-grid">
 {selected.images.map((img,i)=>(
-<img
-  key={i}
-  src={normalizeImage(img)}
-  onClick={() => setPreviewImg(normalizeImage(img))}
-/>
+<img key={i} src={normalizeImage(img)} alt="complaint" onClick={() => setPreviewImg(normalizeImage(img))}/>
 ))}
 </div>
 )}
@@ -223,11 +220,7 @@ function AdminDashboard() {
 <h4>Repair Evidence</h4>
 <div className="image-grid">
 {selected.repairImages.map((img,i)=>(
-<img
-  key={i}
-  src={normalizeImage(img)}
-  onClick={() => setPreviewImg(normalizeImage(img))}
-/>
+<img key={i} src={normalizeImage(img)} alt="repair" onClick={() => setPreviewImg(normalizeImage(img))}/>
 ))}
 </div>
 </>
@@ -244,13 +237,9 @@ function AdminDashboard() {
 <h4>Timeline</h4>
 {Array.isArray(selected.statusHistory) && selected.statusHistory.length > 0 ? (
 selected.statusHistory.map((s,i)=>(
-<div key={i}>
-<b>{s.status}</b> — {s.changedByRole}
-</div>
+<div key={i}><b>{s.status}</b> — {s.changedByRole}</div>
 ))
-) : (
-<p>No timeline available</p>
-)}
+) : <p>No timeline available</p>}
 </div>
 
 </div>
@@ -282,11 +271,7 @@ selected.statusHistory.map((s,i)=>(
 <h4>Ragging Evidence Images</h4>
 <div className="image-grid">
 {selected.images.map((img,i)=>(
-<img
-  key={i}
-  src={normalizeImage(img)}
-  onClick={()=>setPreviewImg(normalizeImage(img))}
-/>
+<img key={i} src={normalizeImage(img)} alt="ragging" onClick={()=>setPreviewImg(normalizeImage(img))}/>
 ))}
 </div>
 </>
@@ -300,12 +285,11 @@ onChange={e=>setRemark(e.target.value)}
 
 <div className="admin-action-box">
 {!selected.adminReviewed && (
-<button className="review-btn" onClick={()=>markReviewed(selected._id)}>
+<button onClick={()=>markReviewed(selected._id)}>
 Mark Reviewed
 </button>
 )}
-
-<button className="remark-btn" onClick={saveRemark}>
+<button onClick={saveRemark}>
 Save Remark
 </button>
 </div>
@@ -321,10 +305,7 @@ Save Remark
 <h3>Overdue Complaints</h3>
 
 {overdue.map(c=>(
-<div key={c._id}
-  className="admin-card danger"
-  onClick={()=>{setSelected(c);setPage("NORMAL")}}
->
+<div key={c._id} className="admin-card danger" onClick={()=>{setSelected(c);setPage("NORMAL")}}>
 <b>{c.category}</b> — {c.status}
 <p>{(c.complaintText || "").slice(0,120)}...</p>
 </div>
@@ -339,7 +320,7 @@ Save Remark
 
       {previewImg && (
         <div className="image-modal" onClick={()=>setPreviewImg(null)}>
-          <img src={previewImg}/>
+          <img src={previewImg} alt="preview"/>
         </div>
       )}
 

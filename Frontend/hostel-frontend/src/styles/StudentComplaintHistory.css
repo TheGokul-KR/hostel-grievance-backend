@@ -1,10 +1,10 @@
 /* ================= ROOT ================= */
 .history-bg{
   min-height:100vh;
-  background:linear-gradient(135deg,#e0f2fe,#f0f9ff,#eef2ff);
+  background:linear-gradient(135deg,#e0f2fe,#fdf4ff);
   padding:32px;
-  font-family:"Inter",system-ui,sans-serif;
-  color:#0f172a;
+  font-family:Inter,system-ui,sans-serif;
+  color:#1e293b;
 }
 
 .history-container{
@@ -38,8 +38,9 @@
   box-shadow:0 6px 20px rgba(59,130,246,.35);
   transition:.3s;
 }
+
 .history-header button:hover{
-  transform:translateY(-3px);
+  transform:translateY(-3px) scale(1.05);
 }
 
 /* ================= SEARCH ================= */
@@ -71,69 +72,63 @@
 
 /* ================= CARD ================= */
 .timeline-card{
-  background:white;
+  background:rgba(255,255,255,.75);
+  backdrop-filter:blur(14px);
   padding:22px;
   border-radius:22px;
   cursor:pointer;
   position:relative;
-  box-shadow:0 8px 24px rgba(0,0,0,.08);
-  transition:.35s;
-  border:2px solid #e0e7ff;
-  animation:slideUp .5s ease;
+  box-shadow:0 12px 30px rgba(99,102,241,.25);
+  transition:.35s ease;
+  border:1px solid #c7d2fe;
+  animation:cardIn .4s ease;
 }
 
 .timeline-card:hover{
-  transform:translateY(-10px);
-  box-shadow:0 12px 28px rgba(59,130,246,.25);
-  border-color:#93c5fd;
+  transform:translateY(-10px) scale(1.03);
+  box-shadow:0 20px 40px rgba(99,102,241,.4);
 }
 
-.timeline-card b{
-  color:#2563eb;
-}
-
-.timeline-card p{
-  color:#334155;
-}
-
-.timeline-card small{
-  color:#64748b;
-}
+.timeline-card b{color:#2563eb;}
+.timeline-card p{color:#334155;}
+.timeline-card small{color:#64748b;}
 
 /* ================= DETAIL ================= */
 .detail-card{
-  background:white;
+  background:rgba(255,255,255,.8);
   padding:30px;
   border-radius:26px;
   box-shadow:0 14px 40px rgba(0,0,0,.12);
-  border:2px solid #e0e7ff;
-  animation:fadeIn .5s ease;
+  border:1px solid #c7d2fe;
+  animation:fadeIn .4s ease;
 }
 
 .back-btn{
-  background:#e0f2fe;
-  color:#2563eb;
+  background:linear-gradient(135deg,#38bdf8,#818cf8);
+  color:white;
   border:none;
   padding:8px 18px;
   border-radius:999px;
   font-weight:700;
   margin-bottom:16px;
   cursor:pointer;
+  box-shadow:0 8px 20px rgba(56,189,248,.45);
   transition:.3s;
 }
 
 .back-btn:hover{
-  background:#bae6fd;
+  transform:translateY(-3px) scale(1.05);
 }
 
 /* ================= DETAIL BOX ================= */
 .detail-box{
-  background:#f8fafc;
+  background:white;
   padding:16px;
   border-radius:16px;
-  border:1px dashed #c7d2fe;
+  border:2px solid #c7d2fe;
   margin:18px 0;
   color:#1e293b;
+  box-shadow:0 6px 14px rgba(99,102,241,.15);
 }
 
 /* ================= IMAGES ================= */
@@ -165,28 +160,6 @@
   margin-top:22px;
 }
 
-.confirm-btn{
-  background:linear-gradient(135deg,#34d399,#22c55e);
-  color:white;
-  padding:10px 20px;
-  border:none;
-  border-radius:999px;
-  font-weight:800;
-}
-
-.reject-btn{
-  background:linear-gradient(135deg,#fb7185,#ef4444);
-  color:white;
-  padding:10px 20px;
-  border:none;
-  border-radius:999px;
-  font-weight:800;
-}
-
-.confirm-btn:hover,.reject-btn:hover{
-  transform:scale(1.08);
-}
-
 /* ================= RATING ================= */
 .rating-box{
   background:#f8fafc;
@@ -205,12 +178,13 @@
 }
 
 .star.filled{
-  color:#fbbf24;
-  text-shadow:0 0 12px gold;
+  color:#facc15;
+  transform:scale(1.1);
+  text-shadow:0 0 10px gold;
 }
 
 .star:hover{
-  transform:scale(1.3) rotate(5deg);
+  transform:scale(1.25);
 }
 
 .rating-box textarea{
@@ -221,6 +195,7 @@
   padding:12px;
   background:white;
   color:#1e293b;
+  box-shadow:0 6px 14px rgba(99,102,241,.15);
 }
 
 .rate-btn{
@@ -233,10 +208,11 @@
   font-weight:900;
   cursor:pointer;
   transition:.3s;
+  box-shadow:0 8px 20px rgba(56,189,248,.45);
 }
 
 .rate-btn:hover{
-  transform:scale(1.08);
+  transform:translateY(-3px) scale(1.05);
 }
 
 /* ================= MODAL ================= */
@@ -258,7 +234,25 @@
   background:white;
   padding:8px;
   box-shadow:0 0 40px #60a5fa;
+  animation:zoomIn .35s ease;
 }
+
+/* ================= OVERLAY ================= */
+.history-action-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(2,6,23,.9);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:26px;
+  font-weight:900;
+  z-index:99999;
+  animation:fadeOverlay 1.4s ease forwards;
+}
+
+.history-action-overlay.confirm{color:#22c55e;}
+.history-action-overlay.reject{color:#ef4444;}
 
 /* ================= MOBILE ================= */
 @media(max-width:600px){
@@ -267,87 +261,13 @@
 
 /* ================= ANIMATIONS ================= */
 @keyframes fadeIn{
-  from{opacity:0;transform:translateY(10px)}
-  to{opacity:1;transform:translateY(0)}
+  from{opacity:0;transform:translateY(15px)}
+  to{opacity:1;transform:none}
 }
 
-@keyframes slideUp{
-  from{opacity:0;transform:translateY(30px)}
-  to{opacity:1;transform:translateY(0)}
-}
-.detail-card input,
-.detail-card textarea,
-.detail-card .detail-box{
-  background:white !important;
-  color:#1e293b !important;
-  border:2px solid #c7d2fe !important;
-  box-shadow:0 4px 12px rgba(59,130,246,.15);
-}
-/* ===== LIGHT HEARTED THEME OVERRIDE ===== */
-
-.history-bg{
-  background:linear-gradient(135deg,#e0f2fe,#fdf4ff);
-  color:#1e293b;
-}
-
-.detail-card,
-.timeline-card{
-  background:rgba(255,255,255,.75);
-  backdrop-filter:blur(14px);
-  border:1px solid #c7d2fe;
-  box-shadow:0 12px 30px rgba(99,102,241,.25);
-}
-
-.timeline-card:hover{
-  transform:translateY(-10px) scale(1.03);
-  box-shadow:0 20px 40px rgba(99,102,241,.4);
-}
-
-/* TEXT */
-h2,h3,b{
-  color:#1e3a8a;
-}
-
-/* INPUT / BOX FIX */
-.detail-box,
-textarea{
-  background:white !important;
-  color:#1e293b !important;
-  border:2px solid #c7d2fe !important;
-  border-radius:14px;
-  box-shadow:0 6px 14px rgba(99,102,241,.15);
-}
-
-/* BUTTONS */
-.back-btn,
-.rate-btn{
-  background:linear-gradient(135deg,#38bdf8,#818cf8);
-  box-shadow:0 8px 20px rgba(56,189,248,.45);
-}
-
-.back-btn:hover,
-.rate-btn:hover{
-  transform:translateY(-3px) scale(1.05);
-}
-
-/* STATUS COLORS */
-.status-pill.completed{background:#4ade80;}
-.status-pill.pending{background:#fb923c;}
-.status-pill.in-progress{background:#38bdf8;}
-.status-pill.resolved{background:#a78bfa;}
-
-/* RATING */
-.star{
-  font-size:34px;
-  transition:.25s;
-}
-.star:hover{
-  transform:scale(1.25);
-}
-
-/* IMAGE MODAL */
-.image-modal img{
-  animation:zoomIn .35s ease;
+@keyframes cardIn{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:none}
 }
 
 @keyframes zoomIn{
@@ -355,12 +275,9 @@ textarea{
   to{transform:scale(1);opacity:1}
 }
 
-/* CARD ENTRANCE */
-.timeline-card{
-  animation:cardIn .4s ease;
-}
-
-@keyframes cardIn{
-  from{opacity:0;transform:translateY(20px)}
-  to{opacity:1;transform:none}
+@keyframes fadeOverlay{
+  0%{opacity:0}
+  15%{opacity:1}
+  80%{opacity:1}
+  100%{opacity:0;visibility:hidden}
 }

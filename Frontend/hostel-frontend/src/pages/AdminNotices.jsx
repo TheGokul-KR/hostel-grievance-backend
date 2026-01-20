@@ -9,6 +9,7 @@ function AdminNotices() {
   const [form, setForm] = useState(null);
 
   const navigate = useNavigate();
+  const role = localStorage.getItem("role")?.toLowerCase();
 
   const emptyForm = {
     _id: null,
@@ -19,6 +20,14 @@ function AdminNotices() {
     pinned: false,
     expiresAt: ""
   };
+
+  // 🔐 AUTH GUARD
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token || role !== "admin") {
+      navigate("/", { replace: true });
+    }
+  }, [navigate, role]);
 
   useEffect(() => {
     load();
@@ -32,8 +41,8 @@ function AdminNotices() {
       data.sort((a, b) => {
         if (a.pinned !== b.pinned) return b.pinned - a.pinned;
         if (a.priority !== b.priority)
-          return ["Low","Normal","High"].indexOf(b.priority) -
-                 ["Low","Normal","High"].indexOf(a.priority);
+          return ["Low", "Normal", "High"].indexOf(b.priority) -
+                 ["Low", "Normal", "High"].indexOf(a.priority);
         return new Date(b.createdAt) - new Date(a.createdAt);
       });
 
@@ -61,25 +70,37 @@ function AdminNotices() {
       expiresAt: form.expiresAt || null
     };
 
-    if (form._id) {
-      await api.patch(`/notices/${form._id}`, payload);
-    } else {
-      await api.post("/notices", payload);
-    }
+    try {
+      if (form._id) {
+        await api.patch(`/notices/${form._id}`, payload);
+      } else {
+        await api.post("/notices", payload);
+      }
 
-    closeForm();
-    await load();
+      closeForm();
+      await load();
+    } catch (err) {
+      alert(err.response?.data?.message || "Save failed");
+    }
   };
 
   const remove = async id => {
     if (!window.confirm("Delete this notice?")) return;
-    await api.delete(`/notices/${id}`);
-    load();
+    try {
+      await api.delete(`/notices/${id}`);
+      load();
+    } catch {
+      alert("Delete failed");
+    }
   };
 
   const togglePin = async n => {
-    await api.patch(`/notices/${n._id}`, { pinned: !n.pinned });
-    load();
+    try {
+      await api.patch(`/notices/${n._id}`, { pinned: !n.pinned });
+      load();
+    } catch {
+      alert("Pin update failed");
+    }
   };
 
   const filtered = list.filter(n =>
@@ -89,16 +110,15 @@ function AdminNotices() {
   );
 
   return (
-    <div className="admin-bg">
+    <div className="admin-bg notice-bg">
 
-      {/* HEADER */}
       <div className="admin-top">
         <h2>📢 Notice Board Management</h2>
         <div>
           <button onClick={() => navigate("/admin")} className="admin-btn">
             ⬅ Dashboard
           </button>
-          <button onClick={openNew} className="admin-btn primary">
+          <button onClick={openNew} className="admin-btn primary pulse-btn">
             ➕ New Notice
           </button>
         </div>
@@ -111,12 +131,12 @@ function AdminNotices() {
         onChange={e => setSearch(e.target.value)}
       />
 
-      <div className="admin-content">
+      <div className="admin-content notice-grid">
 
         {filtered.map(n => (
           <div
             key={n._id}
-            className={`admin-card notice-card ${n.priority === "High" ? "danger" : ""}`}
+            className={`admin-card notice-card animated-card ${n.priority === "High" ? "danger" : ""}`}
           >
             <div className="notice-head">
               <b>{n.title}</b>
@@ -131,7 +151,7 @@ function AdminNotices() {
 
             {n.expiresAt && (
               <p className="expiry">
-                Expires: {new Date(n.expiresAt).toLocaleDateString()}
+                ⏳ Expires: {new Date(n.expiresAt).toLocaleDateString()}
               </p>
             )}
 
@@ -156,8 +176,8 @@ function AdminNotices() {
 
       {/* ================= MODAL ================= */}
       {form && (
-        <div className="modal-bg">
-          <div className="modal-box animated">
+        <div className="modal-bg" onClick={closeForm}>
+          <div className="modal-box animated zoom-in" onClick={e => e.stopPropagation()}>
 
             <h3>{form._id ? "Edit Notice" : "Create Notice"}</h3>
 

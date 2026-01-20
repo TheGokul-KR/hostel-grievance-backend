@@ -15,7 +15,7 @@ const NEXT_STATUS = {
   Completed: null
 };
 
-const normalizeImage = (img) => {
+const normalizeImage = img => {
   if (!img) return "";
   if (img.startsWith("http")) return img;
   return IMAGE_BASE + encodeURIComponent(img);
@@ -34,10 +34,15 @@ function TechnicianDashboard() {
   const [statusFilter, setStatusFilter] = useState("All");
 
   const [previewImage, setPreviewImage] = useState(null);
+  const [newAlert, setNewAlert] = useState(false);
+  const [loadingStatus, setLoadingStatus] = useState(false);
 
   const navigate = useNavigate();
   const selectedIdRef = useRef(null);
+  const lastCountRef = useRef(0);
+  const intervalRef = useRef(null);
 
+  // 🔒 AUTH GUARD
   useEffect(() => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
@@ -52,20 +57,19 @@ function TechnicianDashboard() {
     try {
       const res = await api.get("/complaints/technician");
       const list = Array.isArray(res.data) ? res.data : [];
+
+      if (lastCountRef.current !== 0 && list.length > lastCountRef.current) {
+        setNewAlert(true);
+        setTimeout(() => setNewAlert(false), 2000);
+      }
+
+      lastCountRef.current = list.length;
       setComplaints(list);
 
       if (selectedIdRef.current) {
         const found = list.find(c => c._id === selectedIdRef.current);
-        if (found) {
-          setSelectedComplaint(found);
-          return;
-        } else {
-          selectedIdRef.current = null;
-          setSelectedComplaint(null);
-        }
-      }
-
-      if (!selectedIdRef.current && list.length > 0) {
+        setSelectedComplaint(found || null);
+      } else if (list.length > 0) {
         setSelectedComplaint(list[0]);
         selectedIdRef.current = list[0]._id;
       }
@@ -77,42 +81,32 @@ function TechnicianDashboard() {
 
   useEffect(() => {
     fetchComplaints();
-    const interval = setInterval(fetchComplaints, 5000);
-    return () => clearInterval(interval);
+    intervalRef.current = setInterval(fetchComplaints, 5000);
+    return () => clearInterval(intervalRef.current);
   }, []);
 
-  useEffect(() => {
-    const filteredCount = complaints.filter(c =>
-      (statusFilter === "All" || c.status === statusFilter) &&
-      (
-        (c.complaintText || "").toLowerCase().includes(search.toLowerCase()) ||
-        (c.roomNumber || "").toLowerCase().includes(search.toLowerCase())
-      )
-    ).length;
-
-    if (complaints.length > 0 && filteredCount === 0) {
-      setStatusFilter("All");
-      setSearch("");
-    }
-  }, [complaints, statusFilter, search]);
-
-  const loadSimilar = async (id) => {
-    try {
-      await api.get(`/complaints/similar/${id}`);
-    } catch {}
-  };
-
   const updateStatus = async (id, status) => {
+    if (!solutionSummary.trim()) {
+      alert("Enter solution summary first");
+      return;
+    }
+
     try {
+      setLoadingStatus(true);
+
       await api.patch(`/complaints/${id}/status`, {
         status,
         remark: "",
         solutionSummary
       });
+
       setSolutionSummary("");
       await fetchComplaints();
+
     } catch (err) {
       alert(err.response?.data?.message || "Status update failed");
+    } finally {
+      setLoadingStatus(false);
     }
   };
 
@@ -135,6 +129,12 @@ function TechnicianDashboard() {
   return (
     <div className="tech-bg">
 
+      {newAlert && (
+        <div className="tech-new-alert">
+          🔔 New complaint received
+        </div>
+      )}
+
       <div className="tech-topbar glass-panel">
         <div>
           <h2 className="tech-title">Technician Dashboard</h2>
@@ -147,7 +147,6 @@ function TechnicianDashboard() {
           </button>
 
           <div className="profile-badge">{techName}</div>
-
           <NotificationBell />
 
           <button className="tech-logout" onClick={handleLogout}>Logout</button>
@@ -180,11 +179,13 @@ function TechnicianDashboard() {
           {filtered.map(c => (
             <div
               key={c._id}
-              className={`tech-card glass-card ${selectedComplaint?._id === c._id ? "active" : ""}`}
+              className={`tech-card glass-card 
+                ${selectedComplaint?._id === c._id ? "active" : ""}
+                ${c.priority === "High" ? "high-priority" : ""}
+              `}
               onClick={() => {
                 selectedIdRef.current = c._id;
                 setSelectedComplaint(c);
-                loadSimilar(c._id);
               }}
             >
               <div className="card-head">
@@ -224,7 +225,7 @@ function TechnicianDashboard() {
                 <div className="repair-preview">
                   <h4>Student Evidence</h4>
 
-                  {Array.isArray(selectedComplaint.images) && selectedComplaint.images.length > 0 ? (
+                  {selectedComplaint.images?.length ? (
                     <div className="repair-grid">
                       {selectedComplaint.images.map((img, i) => (
                         <img
@@ -251,6 +252,7 @@ function TechnicianDashboard() {
               {NEXT_STATUS[selectedComplaint.status] && (
                 <button
                   className="accept-btn"
+                  disabled={loadingStatus}
                   onClick={() =>
                     updateStatus(
                       selectedComplaint._id,
@@ -258,7 +260,7 @@ function TechnicianDashboard() {
                     )
                   }
                 >
-                  Move to {NEXT_STATUS[selectedComplaint.status]}
+                  {loadingStatus ? "Updating..." : `Move to ${NEXT_STATUS[selectedComplaint.status]}`}
                 </button>
               )}
             </>

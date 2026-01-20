@@ -2,9 +2,10 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
-// ================= ENSURE UPLOAD FOLDER =================
+// ================= UPLOAD ROOT =================
 const uploadDir = path.join(__dirname, "../uploads");
 
+// ensure folder exists
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -21,13 +22,13 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
 
-    const safeName =
+    const uniqueName =
       Date.now() +
       "-" +
       Math.round(Math.random() * 1e9) +
       ext;
 
-    cb(null, safeName);
+    cb(null, uniqueName);
   }
 });
 
@@ -36,11 +37,11 @@ const fileFilter = (req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase();
 
   if (!file.mimetype.startsWith("image/")) {
-    return cb(new Error("Only image files are allowed"));
+    return cb(new Error("Only image files are allowed"), false);
   }
 
   if (!allowedExt.includes(ext)) {
-    return cb(new Error("Invalid image format"));
+    return cb(new Error("Invalid image format"), false);
   }
 
   cb(null, true);
@@ -50,7 +51,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage,
   limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB
+    fileSize: 5 * 1024 * 1024
   },
   fileFilter
 });

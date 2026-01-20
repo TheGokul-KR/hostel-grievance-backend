@@ -70,6 +70,7 @@ function ForgotPassword() {
           <div className="input-group">
             <input
               type="email"
+              placeholder=" "
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}

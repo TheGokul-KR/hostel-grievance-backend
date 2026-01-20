@@ -38,7 +38,7 @@ function ResetPassword() {
         identifier: identifier.trim(),
         otp,
         newPassword: password,
-        role: "Student" // unchanged (your backend requires role)
+        role: "Student" // unchanged
       });
 
       setMsg(res.data.message || "Password reset successful");
@@ -77,7 +77,9 @@ function ResetPassword() {
 
           <div className="input-group">
             <input
+              placeholder=" "
               required
+              maxLength={6}
               value={otp}
               onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
             />
@@ -86,6 +88,7 @@ function ResetPassword() {
 
           <div className="input-group">
             <input
+              placeholder=" "
               type="password"
               required
               value={password}

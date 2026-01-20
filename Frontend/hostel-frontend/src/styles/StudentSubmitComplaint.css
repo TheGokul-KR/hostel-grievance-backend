@@ -1,193 +1,240 @@
-.submit-bg {
-  min-height: 100vh;
-  background: linear-gradient(135deg,#e0f2ff,#ede9fe,#fce7f3);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
+/* ================= ROOT ================= */
+.submit-bg{
+  min-height:100vh;
+  background:linear-gradient(135deg,#e0f2ff,#ede9fe,#fce7f3);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:20px;
 }
 
-.submit-card {
-  background: linear-gradient(135deg,#f0f4ff,#fdf2f8);
-  border-radius: 20px;
-  padding: 35px;
-  width: 420px;
-  max-width: 95%;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-  animation: fadeIn 0.6s ease;
-  border:1px solid black;
+/* ================= CARD ================= */
+.submit-card{
+  background:linear-gradient(135deg,#f0f4ff,#fdf2f8);
+  border-radius:22px;
+  padding:35px;
+  width:420px;
+  max-width:95%;
+  box-shadow:0 22px 45px rgba(0,0,0,.18);
+  animation:fadeIn .6s ease;
+  border:1px solid rgba(0,0,0,.15);
 }
 
-@keyframes fadeIn {
-  from {opacity:0; transform:translateY(20px);}
-  to {opacity:1; transform:translateY(0);}
+/* ================= HEADER ================= */
+.submit-card h2{
+  color:#1e293b;
+  text-align:center;
+  margin-bottom:4px;
+  font-size:26px;
+  font-weight:900;
 }
 
-.submit-card h2 {
-  color: #1e293b;
-  text-align: center;
-  margin-bottom: 5px;
+.subtitle{
+  color:#475569;
+  text-align:center;
+  font-size:14px;
+  margin-bottom:25px;
 }
 
-.subtitle {
-  color: #475569;
-  text-align: center;
-  font-size: 14px;
-  margin-bottom: 25px;
+/* ================= INPUTS ================= */
+.input-box{
+  width:100%;
+  padding:12px 14px;
+  border-radius:12px;
+  border:1px solid rgba(0,0,0,.25);
+  outline:none;
+  background:white;
+  color:#1e293b;
+  font-size:14px;
+  transition:.3s;
+  margin-bottom:16px;
 }
 
-/* unified input style */
-.input-box {
-  width: 100%;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid black;
-  outline: none;
-  background: #ffffffaa;
-  color: #1e293b;
-  font-size: 14px;
-  transition: 0.3s;
-  margin-bottom: 16px;
+textarea.input-box{
+  min-height:110px;
+  resize:none;
 }
 
-textarea.input-box {
-  min-height: 100px;
-  resize: none;
+.input-box:focus{
+  border-color:#6366f1;
+  box-shadow:0 0 0 3px rgba(99,102,241,.3);
 }
 
-.input-box:focus {
-  box-shadow: 0 0 0 2px #6366f1;
+/* ================= CATEGORY GLOW ================= */
+select.input-box.water{box-shadow:0 0 10px rgba(96,165,250,.6);}
+select.input-box.food{box-shadow:0 0 10px rgba(251,146,60,.6);}
+select.input-box.electricity{box-shadow:0 0 10px rgba(253,224,71,.6);}
+select.input-box.room{box-shadow:0 0 10px rgba(196,181,253,.6);}
+select.input-box.cleaning{box-shadow:0 0 10px rgba(134,239,172,.6);}
+select.input-box.ragging{box-shadow:0 0 10px rgba(248,113,113,.6);}
+
+/* ================= ANONYMOUS ================= */
+.anonymous-box{
+  background:linear-gradient(135deg,#ffe4e6,#fff1f2);
+  padding:10px 12px;
+  border-radius:12px;
+  margin-bottom:16px;
+  border:1px solid rgba(0,0,0,.2);
+  animation:pulse 2s infinite;
 }
 
-/* dynamic category glow */
-select.input-box.water { box-shadow: 0 0 8px #60a5fa; }
-select.input-box.food { box-shadow: 0 0 8px #fb923c; }
-select.input-box.electricity { box-shadow: 0 0 8px #fde047; }
-select.input-box.room { box-shadow: 0 0 8px #c4b5fd; }
-select.input-box.cleaning { box-shadow: 0 0 8px #86efac; }
-select.input-box.ragging { box-shadow: 0 0 8px #f87171; }
-
-/* anonymous */
-.anonymous-box {
-  background: linear-gradient(135deg,#ffe4e6,#fff1f2);
-  padding: 10px;
-  border-radius: 10px;
-  margin-bottom: 15px;
-  border:1px solid black;
-  animation: pulse 1.8s infinite;
+.anonymous-box label{
+  color:#991b1b;
+  font-size:13px;
+  font-weight:700;
 }
 
-@keyframes pulse {
-  0% { box-shadow: 0 0 5px #f87171; }
-  50% { box-shadow: 0 0 12px #f87171; }
-  100% { box-shadow: 0 0 5px #f87171; }
+@keyframes pulse{
+  0%{box-shadow:0 0 6px rgba(248,113,113,.4);}
+  50%{box-shadow:0 0 14px rgba(248,113,113,.7);}
+  100%{box-shadow:0 0 6px rgba(248,113,113,.4);}
 }
 
-.anonymous-box label {
-  color: #991b1b;
-  font-size: 13px;
+/* ================= IMAGE UPLOAD ================= */
+.image-upload-box{margin-bottom:20px;}
+
+.upload-label{
+  display:inline-block;
+  padding:9px 16px;
+  border-radius:12px;
+  background:linear-gradient(45deg,#6366f1,#8b5cf6);
+  color:white;
+  cursor:pointer;
+  font-size:13px;
+  font-weight:700;
+  transition:.3s;
+  box-shadow:0 6px 18px rgba(99,102,241,.45);
+  border:1px solid rgba(0,0,0,.2);
 }
 
-/* image upload */
-.image-upload-box {
-  margin-bottom: 20px;
+.upload-label:hover{
+  transform:scale(1.07);
 }
 
-.upload-label {
-  display: inline-block;
-  padding: 8px 14px;
-  border-radius: 10px;
-  background: linear-gradient(45deg,#6366f1,#8b5cf6);
-  color: white;
-  cursor: pointer;
-  font-size: 13px;
-  transition: 0.3s;
-  box-shadow: 0 6px 15px rgba(99,102,241,.4);
-  border:1px solid black;
+/* ================= PREVIEW ================= */
+.preview-grid{
+  margin-top:12px;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(80px,1fr));
+  gap:10px;
 }
 
-.upload-label:hover {
-  transform: scale(1.05);
+.preview-card{
+  position:relative;
+  border-radius:12px;
+  overflow:hidden;
+  animation:popIn .4s ease;
+  border:1px solid rgba(0,0,0,.25);
 }
 
-.preview-grid {
-  margin-top: 12px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 10px;
+.preview-card img{
+  width:100%;
+  height:80px;
+  object-fit:cover;
+  transition:.3s;
 }
 
-.preview-card {
-  position: relative;
-  border-radius: 10px;
-  overflow: hidden;
-  animation: popIn 0.4s ease;
-  border:1px solid black;
+.preview-card:hover img{
+  transform:scale(1.08);
 }
 
-.preview-card img {
-  width: 100%;
-  height: 80px;
-  object-fit: cover;
-  transition: 0.3s;
+.remove-preview{
+  position:absolute;
+  top:4px;
+  right:4px;
+  background:#020617;
+  color:white;
+  border-radius:50%;
+  width:20px;
+  height:20px;
+  font-size:12px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  cursor:pointer;
+  transition:.2s;
 }
 
-.preview-card:hover img {
-  transform: scale(1.05);
+.remove-preview:hover{transform:scale(1.15);}
+
+/* ================= SUBMIT ================= */
+.submit-btn{
+  width:100%;
+  padding:13px;
+  border-radius:14px;
+  border:1px solid rgba(0,0,0,.2);
+  font-weight:900;
+  font-size:15px;
+  background:linear-gradient(45deg,#22c55e,#4ade80);
+  color:white;
+  cursor:pointer;
+  transition:.3s;
+  box-shadow:0 10px 25px rgba(34,197,94,.4);
 }
 
-.remove-preview {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  background: black;
-  color: white;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  font-size: 12px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  transition: 0.2s;
+.submit-btn:hover{
+  transform:translateY(-3px) scale(1.02);
 }
 
-.remove-preview:hover {
-  transform: scale(1.1);
+.submit-btn:disabled{
+  background:gray;
+  box-shadow:none;
+  cursor:not-allowed;
 }
 
-@keyframes popIn {
-  from {opacity:0; transform:scale(0.8);}
-  to {opacity:1; transform:scale(1);}
+/* ================= SUCCESS OVERLAY ================= */
+.submit-success-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(2,6,23,.95);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:99999;
+  animation:fadeOverlay .4s ease;
 }
 
-/* submit button */
-.submit-btn {
-  width: 100%;
-  padding: 12px;
-  border-radius: 12px;
-  border:1px solid black;
-  font-weight: bold;
-  font-size: 15px;
-  background: linear-gradient(45deg,#22c55e,#4ade80);
-  color: white;
-  cursor: pointer;
-  transition: 0.3s;
+.submit-success-box{
+  background:#020617;
+  padding:26px 30px;
+  border-radius:18px;
+  font-size:20px;
+  font-weight:900;
+  color:#22c55e;
+  text-align:center;
+  animation:popSuccess .5s ease;
+  box-shadow:0 0 35px rgba(34,197,94,.5);
 }
 
-.submit-btn:hover {
-  transform: translateY(-2px);
+.submit-success-box p{
+  margin-top:10px;
+  font-size:14px;
+  color:#c7d2fe;
+  font-weight:500;
 }
 
-.submit-btn:disabled {
-  background: gray;
-  cursor: not-allowed;
-}
-
-/* mobile */
+/* ================= MOBILE ================= */
 @media(max-width:500px){
-  .submit-card {
-    padding: 25px;
-  }
+  .submit-card{padding:25px;}
+}
+
+/* ================= ANIMATIONS ================= */
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:none}
+}
+
+@keyframes popIn{
+  from{opacity:0;transform:scale(.85)}
+  to{opacity:1;transform:scale(1)}
+}
+
+@keyframes popSuccess{
+  from{transform:scale(.7);opacity:0}
+  to{transform:scale(1);opacity:1}
+}
+
+@keyframes fadeOverlay{
+  from{opacity:0}
+  to{opacity:1}
 }

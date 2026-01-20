@@ -12,6 +12,9 @@ function StudentRaggingComplaint() {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // ADD ONLY
+  const [showSuccess, setShowSuccess] = useState(false);
+
   const rawRole = localStorage.getItem("role");
   const role = rawRole ? rawRole.toLowerCase() : null;
 
@@ -80,8 +83,13 @@ function StudentRaggingComplaint() {
     try {
       await api.post("/complaints", formData);
 
-      alert("Your grievance has been securely recorded.");
-      navigate("/student/history");
+      // ADD ONLY
+      setShowSuccess(true);
+
+      setTimeout(() => {
+        navigate("/student/history");
+      }, 1800);
+
     } catch (err) {
       console.error("RAGGING SUBMIT ERROR:", err.response?.data || err.message);
       alert(err.response?.data?.message || "Submission failed. Please try again.");
@@ -92,6 +100,16 @@ function StudentRaggingComplaint() {
 
   return (
     <div className="ragging-bg">
+
+      {showSuccess && (
+        <div className="ragging-success-overlay">
+          <div className="ragging-success-box">
+            🔒 Grievance Recorded Securely
+            <p>Your identity and report are protected.</p>
+          </div>
+        </div>
+      )}
+
       <div className="ragging-card">
 
         <h2>Ragging Grievance Submission</h2>
@@ -113,7 +131,7 @@ function StudentRaggingComplaint() {
           />
 
           <textarea
-            className="input-box"
+            className="input-box textarea-big"
             placeholder="Describe the incident clearly with date, location and people involved..."
             value={complaintText}
             onChange={(e) => setComplaintText(e.target.value)}

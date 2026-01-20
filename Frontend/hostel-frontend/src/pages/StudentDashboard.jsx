@@ -1,12 +1,12 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BackButton from "../components/BackButton";
 import api from "../services/api";
 import "../styles/dashboard.css";
 
-const IMAGE_BASE = import.meta.env.VITE_API_BASE_URL.replace(/\/api$/, "") + "/uploads/";
-
-
+const IMAGE_BASE = import.meta.env.VITE_API_BASE_URL
+  ? import.meta.env.VITE_API_BASE_URL.replace(/\/api$/, "") + "/uploads/"
+  : "http://localhost:5000/uploads/";
 
 function StudentDashboard() {
   const navigate = useNavigate();
@@ -21,14 +21,24 @@ function StudentDashboard() {
   const [ratingTarget, setRatingTarget] = useState(null);
   const [rating, setRating] = useState(5);
   const [feedback, setFeedback] = useState("");
+  const [ratingLoading, setRatingLoading] = useState(false);
 
   const [detailComplaint, setDetailComplaint] = useState(null);
 
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [showLogout, setShowLogout] = useState(false);
+
+  // 🔒 AUTH
   useEffect(() => {
     if (!token || role !== "student") {
       navigate("/", { replace: true });
     }
   }, [token, role, navigate]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setShowWelcome(false), 1500);
+    return () => clearTimeout(t);
+  }, []);
 
   const loadStats = async () => {
     try {
@@ -48,8 +58,11 @@ function StudentDashboard() {
 
   const logout = () => {
     if (!window.confirm("Logout from system?")) return;
-    localStorage.clear();
-    navigate("/", { replace: true });
+    setShowLogout(true);
+    setTimeout(() => {
+      localStorage.clear();
+      navigate("/", { replace: true });
+    }, 1200);
   };
 
   const total = list.length;
@@ -61,12 +74,6 @@ function StudentDashboard() {
   const needsAction = list.filter(
     c => c.status === "Resolved" && c.studentConfirmation === "Pending"
   );
-
-  const overdue = list.filter(c => c.isOverdue).length;
-
-  const progressPercent = total
-    ? Math.round(((completed + resolved) / total) * 100)
-    : 0;
 
   const avgResolution =
     completed
@@ -81,47 +88,71 @@ function StudentDashboard() {
         )
       : 0;
 
-  const confirmComplaint = async (id) => {
-    await api.patch(`/complaints/${id}/confirm`);
-    setRatingTarget(id);
-    loadStats();
+  const confirmComplaint = async id => {
+    try {
+      await api.patch(`/complaints/${id}/confirm`);
+      setRatingTarget(id);
+      loadStats();
+    } catch {
+      alert("Confirmation failed");
+    }
   };
 
-  const rejectComplaint = async (id) => {
+  const rejectComplaint = async id => {
     if (!window.confirm("Reject this resolution?")) return;
-    await api.patch(`/complaints/${id}/reject`);
-    loadStats();
+    try {
+      await api.patch(`/complaints/${id}/reject`);
+      loadStats();
+    } catch {
+      alert("Rejection failed");
+    }
   };
 
   const submitRating = async () => {
-    await api.patch(`/complaints/${ratingTarget}/rate`, {
-      rating,
-      feedback
-    });
+    if (!feedback.trim()) {
+      alert("Please enter feedback");
+      return;
+    }
 
-    setRatingTarget(null);
-    setRating(5);
-    setFeedback("");
-    loadStats();
+    try {
+      setRatingLoading(true);
+
+      await api.patch(`/complaints/${ratingTarget}/rate`, {
+        rating,
+        feedback
+      });
+
+      setRatingTarget(null);
+      setRating(5);
+      setFeedback("");
+      loadStats();
+
+    } catch {
+      alert("Rating submission failed");
+    } finally {
+      setRatingLoading(false);
+    }
   };
 
-  const chartData = useMemo(() => {
-    const max = Math.max(pending, inProgress, resolved, completed, 1);
-    return [
-      { label: "Pending", value: pending, color: "orange", height: (pending / max) * 100 },
-      { label: "In Progress", value: inProgress, color: "purple", height: (inProgress / max) * 100 },
-      { label: "Resolved", value: resolved, color: "blue", height: (resolved / max) * 100 },
-      { label: "Completed", value: completed, color: "green", height: (completed / max) * 100 }
-    ];
-  }, [pending, inProgress, resolved, completed]);
-
   const formatImg = img =>
-    img?.startsWith("http") ? img : IMAGE_BASE + img;
+    img?.startsWith("http") ? img : IMAGE_BASE + encodeURIComponent(img);
 
   return (
     <div className="sd-page">
 
-      <div className="sd-header">
+      {showWelcome && (
+        <div className="sd-welcome-overlay fade-slide">
+          Welcome, {name} 👋
+        </div>
+      )}
+
+      {showLogout && (
+        <div className="sd-logout-overlay fade-slide">
+          Logging out from Student Dashboard…
+        </div>
+      )}
+
+      <div className="sd-header fade-up">
         <BackButton fallback="/" />
         <div>
           <h2>Hello, {name}</h2>
@@ -130,11 +161,11 @@ function StudentDashboard() {
       </div>
 
       {needsAction.length > 0 && (
-        <div className="sd-section sd-alerts">
+        <div className="sd-section sd-alerts fade-up">
           <h3>Needs Your Action</h3>
 
           {needsAction.map(c => (
-            <div key={c._id} className="alert warning">
+            <div key={c._id} className="alert warning bounce-in">
               Complaint in Room {c.roomNumber} resolved.
               <div style={{ marginTop: 6 }}>
                 <button onClick={() => confirmComplaint(c._id)}>Confirm</button>
@@ -146,115 +177,34 @@ function StudentDashboard() {
         </div>
       )}
 
- <div className="sd-section">
-  <h3>Complaint Status Overview</h3>
+      <div className="sd-section fade-up">
+        <h3>Complaint Status Overview</h3>
 
-  <div className="fancy-status">
-    <div className="status-card orange">
-      <div className="status-ring"></div>
-      <h3>{pending}</h3>
-      <p>Pending</p>
-    </div>
-
-    <div className="status-card blue">
-      <div className="status-ring"></div>
-      <h3>{inProgress}</h3>
-      <p>In Progress</p>
-    </div>
-
-    <div className="status-card purple">
-      <div className="status-ring"></div>
-      <h3>{resolved}</h3>
-      <p>Resolved</p>
-    </div>
-
-    <div className="status-card green">
-      <div className="status-ring"></div>
-      <h3>{completed}</h3>
-      <p>Completed</p>
-    </div>
-  </div>
-</div>
-
-
-      <div className="sd-actions">
-
-        <div className="sd-tile blue" onClick={() => navigate("/student/submit")}>
-          <h4>New Complaint</h4>
-          <p>Create a complaint</p>
+        <div className="fancy-status">
+          <div className="status-card orange float-card"><div className="status-ring"></div><h3>{pending}</h3><p>Pending</p></div>
+          <div className="status-card blue float-card"><div className="status-ring"></div><h3>{inProgress}</h3><p>In Progress</p></div>
+          <div className="status-card purple float-card"><div className="status-ring"></div><h3>{resolved}</h3><p>Resolved</p></div>
+          <div className="status-card green float-card"><div className="status-ring"></div><h3>{completed}</h3><p>Completed</p></div>
         </div>
-
-        <div className="sd-tile red" onClick={() => navigate("/student/ragging")}>
-          <h4>Ragging</h4>
-          <p>Emergency report</p>
-        </div>
-
-        <div className="sd-tile purple" onClick={() => navigate("/student/history")}>
-          <h4>History</h4>
-          <p>Track complaints</p>
-        </div>
-
-        <div className="sd-tile teal" onClick={() => navigate("/student/notices")}>
-          <h4>Notices</h4>
-          <p>Hostel updates</p>
-        </div>
-
-        <div className="sd-tile gray" onClick={logout}>
-          <h4>Logout</h4>
-          <p>Exit account</p>
-        </div>
-
       </div>
 
-      <div className="sd-section sd-kpi">
-        <div className="kpi-card"><h4>{avgResolution || 0} days</h4><span>Avg Resolution</span></div>
-        <div className="kpi-card"><h4>{needsAction.length}</h4><span>Awaiting Confirmation</span></div>
-        <div className="kpi-card"><h4>{resolved}</h4><span>Resolved</span></div>
+      <div className="sd-actions fade-up">
+        <div className="sd-tile blue hover-pop" onClick={() => navigate("/student/submit")}>New Complaint</div>
+        <div className="sd-tile red hover-pop" onClick={() => navigate("/student/ragging")}>Ragging</div>
+        <div className="sd-tile purple hover-pop" onClick={() => navigate("/student/history")}>History</div>
+        <div className="sd-tile teal hover-pop" onClick={() => navigate("/student/notices")}>Notices</div>
+        <div className="sd-tile gray hover-pop" onClick={logout}>Logout</div>
       </div>
 
-      {detailComplaint && (
-        <div className="image-modal" onClick={() => setDetailComplaint(null)}>
-          <div className="rating-box" onClick={e => e.stopPropagation()}>
-            <h3>Complaint Detail</h3>
-
-            <p><b>Status:</b> {detailComplaint.status}</p>
-            <p><b>Category:</b> {detailComplaint.category}</p>
-            <p><b>Technician:</b> {detailComplaint.technicianNameSnapshot || "Not assigned"}</p>
-
-            <div className="detail-text">{detailComplaint.complaintText}</div>
-
-            {detailComplaint.repairImages?.length > 0 && (
-              <>
-                <h4>Repair Evidence</h4>
-                <div className="image-grid">
-                  {detailComplaint.repairImages.map((img,i)=>(
-                    <img key={i} src={formatImg(img)} alt="repair" />
-                  ))}
-                </div>
-              </>
-            )}
-
-            {detailComplaint.statusHistory?.length > 0 ? (
-              <>
-                <h4>Timeline</h4>
-                {detailComplaint.statusHistory.map((s,i)=>(
-                  <div key={i}>
-                    <b>{s.status}</b> — {s.changedByRole}
-                  </div>
-                ))}
-              </>
-            ) : (
-              <p className="timeline-empty">No timeline available</p>
-            )}
-
-            <button onClick={() => setDetailComplaint(null)}>Close</button>
-          </div>
-        </div>
-      )}
+      <div className="sd-section sd-kpi fade-up">
+        <div className="kpi-card pop-in"><h4>{avgResolution || 0} days</h4><span>Avg Resolution</span></div>
+        <div className="kpi-card pop-in"><h4>{needsAction.length}</h4><span>Awaiting Confirmation</span></div>
+        <div className="kpi-card pop-in"><h4>{resolved}</h4><span>Resolved</span></div>
+      </div>
 
       {ratingTarget && (
-        <div className="image-modal" onClick={() => setRatingTarget(null)}>
-          <div className="rating-box" onClick={e => e.stopPropagation()}>
+        <div className="image-modal fade-bg" onClick={() => setRatingTarget(null)}>
+          <div className="rating-box zoom-in" onClick={e => e.stopPropagation()}>
             <h3>Rate Resolution</h3>
 
             <select value={rating} onChange={e => setRating(+e.target.value)}>
@@ -272,7 +222,9 @@ function StudentDashboard() {
             />
 
             <div style={{ marginTop: 10 }}>
-              <button onClick={submitRating}>Submit</button>
+              <button disabled={ratingLoading} onClick={submitRating}>
+                {ratingLoading ? "Submitting..." : "Submit"}
+              </button>
               <button onClick={() => setRatingTarget(null)}>Cancel</button>
             </div>
           </div>
@@ -284,5 +236,3 @@ function StudentDashboard() {
 }
 
 export default StudentDashboard;
-
-

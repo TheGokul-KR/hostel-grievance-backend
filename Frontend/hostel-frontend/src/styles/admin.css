@@ -1,10 +1,9 @@
 /* ================= GLOBAL ================= */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
 
-*{
-  box-sizing:border-box;
-}
+*{ box-sizing:border-box; }
 
+/* ================= ROOT ================= */
 .admin-bg{
   min-height:100vh;
   background:
@@ -24,13 +23,12 @@
 
 /* ================= CRITICAL MODE ================= */
 .critical-mode{
-  animation:criticalPulse 3s infinite;
+  animation:criticalPulse 2s infinite alternate;
 }
 
 @keyframes criticalPulse{
-  0%{box-shadow:0 0 0 rgba(239,68,68,0)}
-  50%{box-shadow:0 0 40px rgba(239,68,68,.6)}
-  100%{box-shadow:0 0 0 rgba(239,68,68,0)}
+  from{box-shadow:inset 0 0 0 rgba(239,68,68,.2)}
+  to{box-shadow:inset 0 0 40px rgba(239,68,68,.35)}
 }
 
 .critical-banner{
@@ -140,8 +138,6 @@
   cursor:pointer;
   font-weight:600;
   color:#c7d2fe;
-  position:relative;
-  overflow:hidden;
   transition:.35s;
 }
 
@@ -160,11 +156,6 @@
   min-height:72vh;
   box-shadow:0 0 50px rgba(56,189,248,.2);
   animation:fadeUp .6s ease;
-}
-
-@keyframes fadeUp{
-  from{opacity:0;transform:translateY(25px)}
-  to{opacity:1;transform:translateY(0)}
 }
 
 /* ================= SEARCH ================= */
@@ -186,16 +177,16 @@
   border:1px solid rgba(255,255,255,.1);
   margin-bottom:16px;
   cursor:pointer;
-  transition:.4s;
+  transition:.35s;
   box-shadow:0 0 25px rgba(56,189,248,.25);
 }
 
 .admin-card:hover{
-  transform:translateY(-8px) scale(1.05);
-  box-shadow:0 0 45px rgba(56,189,248,.7);
+  transform:translateY(-6px) scale(1.03);
+  box-shadow:0 14px 35px rgba(0,0,0,.25);
 }
 
-/* ================= JOURNEY BAR ================= */
+/* ================= JOURNEY ================= */
 .journey-bar{
   display:flex;
   gap:10px;
@@ -211,14 +202,14 @@
   border:1px solid rgba(255,255,255,.1);
   font-size:12px;
   color:#94a3b8;
-  position:relative;
-  overflow:hidden;
+  transition:.3s;
 }
 
 .journey-step.active{
   background:linear-gradient(45deg,#38bdf8,#a78bfa,#f472b6);
-  color:#020617;
+  color:#22c55e;
   font-weight:800;
+  transform:scale(1.1);
   animation:glowStep 2s infinite;
 }
 
@@ -235,6 +226,7 @@
   border-radius:26px;
   border:1px solid rgba(255,255,255,.1);
   box-shadow:0 0 40px rgba(99,102,241,.6);
+  animation:fadeUp .4s ease;
 }
 
 /* ================= IMAGE GRID ================= */
@@ -266,7 +258,9 @@
   border-radius:18px;
   margin-bottom:14px;
   cursor:pointer;
-  transition:.4s;
+  transition:.35s;
+  border-left:5px solid #ef4444;
+  animation:fadeIn .4s ease;
 }
 
 .ragging-card:hover{
@@ -296,13 +290,59 @@
   transform:translateY(-3px) scale(1.08);
 }
 
+/* ================= NOTICE PAGE ================= */
+.notice-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:22px;
+}
+
+.notice-card{
+  animation:fadeUp .4s ease;
+}
+
+.pin-badge{
+  background:#fde68a;
+  color:#92400e;
+  padding:2px 8px;
+  border-radius:10px;
+  font-size:11px;
+  font-weight:700;
+}
+
+.expiry{
+  color:#ef4444;
+  font-weight:600;
+  font-size:12px;
+}
+
+/* ================= MODAL ================= */
+.modal-box.zoom-in{
+  animation:zoomIn .3s ease;
+}
+
+@keyframes zoomIn{
+  from{transform:scale(.85);opacity:0}
+  to{transform:scale(1);opacity:1}
+}
+
+/* ================= ANIMATIONS ================= */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(25px)}
+  to{opacity:1;transform:none}
+}
+
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(15px)}
+  to{opacity:1;transform:none}
+}
+
 /* ================= MOBILE ================= */
 @media(max-width:900px){
-  .admin-layout{
-    grid-template-columns:1fr;
-  }
-  .admin-menu{
-    flex-direction:row;
-    overflow-x:auto;
-  }
+  .admin-layout{grid-template-columns:1fr;}
+  .admin-menu{flex-direction:row;overflow-x:auto;}
+}
+
+@media(max-width:700px){
+  .notice-grid{grid-template-columns:1fr;}
 }

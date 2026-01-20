@@ -1,18 +1,22 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const fs = require("fs");
 require("dotenv").config();
 
 require("./db");
 
 const app = express();
 
+// ================= PROXY SUPPORT =================
+// Required for Render / Railway behind proxy
+app.set("trust proxy", 1);
+
 // ================= MIDDLEWARE =================
 app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://hostel-grievance-system-9avn.onrender.com",
       process.env.FRONTEND_URL
     ].filter(Boolean),
     credentials: true
@@ -20,9 +24,16 @@ app.use(
 );
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// ================= UPLOADS DIRECTORY CHECK =================
+const uploadDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 // serve uploaded images
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", express.static(uploadDir));
 
 // ================= HOME =================
 app.get("/", (req, res) => {
@@ -58,8 +69,10 @@ app.use((req, res) => {
 
 // ================= GLOBAL ERROR HANDLER =================
 app.use((err, req, res, next) => {
-  console.error("GLOBAL ERROR:", err);
-  res.status(500).json({ message: err.message || "Internal server error" });
+  console.error("GLOBAL ERROR:", err.message);
+  res.status(500).json({
+    message: err.message || "Internal server error"
+  });
 });
 
 // ================= SERVER =================

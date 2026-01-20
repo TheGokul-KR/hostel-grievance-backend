@@ -13,6 +13,9 @@ function StudentSubmitComplaint() {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // ADD ONLY
+  const [showSuccess, setShowSuccess] = useState(false);
+
   const roomNumber = localStorage.getItem("roomNumber") || "N/A";
 
   const rawRole = localStorage.getItem("role");
@@ -63,7 +66,6 @@ function StudentSubmitComplaint() {
     const formData = new FormData();
     formData.append("complaintText", complaintText.trim());
     formData.append("category", category.toLowerCase());
-
     formData.append("priority", priority);
     formData.append("roomNumber", roomNumber);
     formData.append("isAnonymous", false);
@@ -75,7 +77,14 @@ function StudentSubmitComplaint() {
 
     try {
       await api.post("/complaints", formData);
-      navigate("/student/history");
+
+      // ADD ONLY
+      setShowSuccess(true);
+
+      setTimeout(() => {
+        navigate("/student/history");
+      }, 1800);
+
     } catch (err) {
       console.error(err.response?.data || err.message);
       alert(err.response?.data?.message || "Submission failed");
@@ -86,6 +95,16 @@ function StudentSubmitComplaint() {
 
   return (
     <div className="submit-bg">
+
+      {showSuccess && (
+        <div className="submit-success-overlay">
+          <div className="submit-success-box">
+            ✅ Complaint Submitted Successfully
+            <p>Redirecting to history...</p>
+          </div>
+        </div>
+      )}
+
       <div className="submit-card">
 
         <BackButton fallback="/student" />

@@ -28,6 +28,9 @@ function StudentComplaintHistory() {
   const [previewImg, setPreviewImg] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
+  // ADD ONLY
+  const [actionAnim, setActionAnim] = useState(null); // "confirm" | "reject"
+
   const navigate = useNavigate();
 
   // ================= AUTH GUARD =================
@@ -95,7 +98,9 @@ function StudentComplaintHistory() {
     if (actionLoading) return;
     setActionLoading(true);
     await api.patch(`/complaints/${id}/confirm`);
+    setActionAnim("confirm");
     await reloadAndSelect(id);
+    setTimeout(() => setActionAnim(null), 1400);
     setActionLoading(false);
   };
 
@@ -103,7 +108,9 @@ function StudentComplaintHistory() {
     if (actionLoading) return;
     setActionLoading(true);
     await api.patch(`/complaints/${id}/reject`);
+    setActionAnim("reject");
     await reloadAndSelect(id);
+    setTimeout(() => setActionAnim(null), 1400);
     setActionLoading(false);
   };
 
@@ -122,6 +129,12 @@ function StudentComplaintHistory() {
   return (
     <div className="history-bg">
       <div className="history-container">
+
+        {actionAnim && (
+          <div className={`history-action-overlay ${actionAnim}`}>
+            {actionAnim === "confirm" ? "✔ Resolution Confirmed" : "✖ Resolution Rejected"}
+          </div>
+        )}
 
         {!selected && (
           <>

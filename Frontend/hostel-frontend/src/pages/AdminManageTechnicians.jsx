@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 import "../styles/adminManage.css";
@@ -16,6 +16,8 @@ function AdminManageTechnicians() {
   const [techs, setTechs] = useState([]);
   const [complaints, setComplaints] = useState([]);
   const [search, setSearch] = useState("");
+  const [toast, setToast] = useState("");
+  const toastRef = useRef(null);
 
   const [form, setForm] = useState({
     techId: "",
@@ -28,19 +30,34 @@ function AdminManageTechnicians() {
   const navigate = useNavigate();
   const role = localStorage.getItem("role")?.toLowerCase();
 
+  // 🔒 AUTH GUARD
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token || role !== "admin") navigate("/", { replace: true });
   }, [navigate, role]);
 
+  const showToast = msg => {
+    setToast(msg);
+    clearTimeout(toastRef.current);
+    toastRef.current = setTimeout(() => setToast(""), 2000);
+  };
+
   const fetchTechs = async () => {
-    const res = await api.get("/admin/technicians");
-    setTechs(Array.isArray(res.data) ? res.data : []);
+    try {
+      const res = await api.get("/admin/technicians");
+      setTechs(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      setTechs([]);
+    }
   };
 
   const fetchComplaints = async () => {
-    const res = await api.get("/complaints/admin/all");
-    setComplaints(Array.isArray(res.data) ? res.data : []);
+    try {
+      const res = await api.get("/complaints/admin/all");
+      setComplaints(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      setComplaints([]);
+    }
   };
 
   useEffect(() => {
@@ -56,32 +73,48 @@ function AdminManageTechnicians() {
     e.preventDefault();
 
     if (!form.department) {
-      alert("Select department");
+      showToast("Select department");
       return;
     }
 
-    await api.post("/admin/technicians", form);
+    try {
+      await api.post("/admin/technicians", form);
 
-    setForm({
-      techId: "",
-      name: "",
-      email: "",
-      department: "",
-      block: ""
-    });
+      setForm({
+        techId: "",
+        name: "",
+        email: "",
+        department: "",
+        block: ""
+      });
 
-    fetchTechs();
+      showToast("Technician added successfully");
+      fetchTechs();
+    } catch (err) {
+      showToast(err.response?.data?.message || "Add failed");
+    }
   };
 
   const deactivate = async id => {
     if (!window.confirm("Deactivate technician?")) return;
-    await api.patch(`/admin/technicians/${id}/deactivate`);
-    fetchTechs();
+
+    try {
+      await api.patch(`/admin/technicians/${id}/deactivate`);
+      showToast("Technician deactivated");
+      fetchTechs();
+    } catch {
+      showToast("Deactivate failed");
+    }
   };
 
   const reactivate = async id => {
-    await api.patch(`/admin/technicians/${id}/reactivate`);
-    fetchTechs();
+    try {
+      await api.patch(`/admin/technicians/${id}/reactivate`);
+      showToast("Technician reactivated");
+      fetchTechs();
+    } catch {
+      showToast("Reactivate failed");
+    }
   };
 
   const getStats = tech => {
@@ -104,7 +137,7 @@ function AdminManageTechnicians() {
 
   return (
     <div className="admin-manage-bg">
-      <div className="admin-manage-card">
+      <div className="admin-manage-card animated-fade">
 
         <button className="back-btn" onClick={() => navigate("/admin")}>
           ← Back
@@ -113,18 +146,12 @@ function AdminManageTechnicians() {
         <h2>Manage Technicians</h2>
 
         {/* ADD FORM */}
-        <form className="admin-form" onSubmit={addTechnician}>
+        <form className="admin-form glass" onSubmit={addTechnician}>
           <input name="techId" placeholder="Technician ID" value={form.techId} onChange={handleChange} required />
           <input name="name" placeholder="Name" value={form.name} onChange={handleChange} required />
           <input name="email" placeholder="Email" value={form.email} onChange={handleChange} required />
 
-          {/* 🔥 DEPARTMENT DROPDOWN */}
-          <select
-            name="department"
-            value={form.department}
-            onChange={handleChange}
-            required
-          >
+          <select name="department" value={form.department} onChange={handleChange} required>
             <option value="">Select Department</option>
             {DEPARTMENTS.map(d => (
               <option key={d} value={d}>
@@ -135,7 +162,7 @@ function AdminManageTechnicians() {
 
           <input name="block" placeholder="Block" value={form.block} onChange={handleChange} />
 
-          <button type="submit">Add Technician</button>
+          <button type="submit" className="primary-btn">Add Technician</button>
         </form>
 
         {/* SEARCH */}
@@ -147,68 +174,74 @@ function AdminManageTechnicians() {
         />
 
         {/* LIST */}
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Dept</th>
-              <th>Block</th>
-              <th>Account</th>
-              <th>Status</th>
-              <th>Performance</th>
-              <th>Action</th>
-            </tr>
-          </thead>
+        <div className="table-wrapper">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Dept</th>
+                <th>Block</th>
+                <th>Account</th>
+                <th>Status</th>
+                <th>Performance</th>
+                <th>Action</th>
+              </tr>
+            </thead>
 
-          <tbody>
-            {filtered.map(t => {
-              const stats = getStats(t);
-              return (
-                <tr key={t._id}>
-                  <td>{t.techId}</td>
-                  <td>{t.name}</td>
-                  <td>{t.email}</td>
-                  <td>{t.department}</td>
-                  <td>{t.block || "-"}</td>
+            <tbody>
+              {filtered.map(t => {
+                const stats = getStats(t);
+                return (
+                  <tr key={t._id} className="row-hover">
+                    <td>{t.techId}</td>
+                    <td>{t.name}</td>
+                    <td>{t.email}</td>
+                    <td>{t.department}</td>
+                    <td>{t.block || "-"}</td>
 
-                  <td>
-                    {t.userExists
-                      ? (t.userActive ? "Active" : "Disabled")
-                      : "Not Registered"}
-                  </td>
+                    <td>
+                      {t.userExists
+                        ? (t.userActive ? "Active" : "Disabled")
+                        : "Not Registered"}
+                    </td>
 
-                  <td className={t.activated ? "status-active" : "status-inactive"}>
-                    {t.activated ? "Active" : "Inactive"}
-                  </td>
+                    <td className={t.activated ? "status-active" : "status-inactive"}>
+                      {t.activated ? "Active" : "Inactive"}
+                    </td>
 
-                  <td>
-                    Total:{stats.total}<br/>
-                    Resolved:{stats.resolved}<br/>
-                    Pending:{stats.pending}
-                  </td>
+                    <td>
+                      <div className="stats-box">
+                        Total: {stats.total}<br/>
+                        Resolved: {stats.resolved}<br/>
+                        Pending: {stats.pending}
+                      </div>
+                    </td>
 
-                  <td>
-                    {t.activated ? (
-                      <button className="danger" onClick={() => deactivate(t._id)}>
-                        Deactivate
-                      </button>
-                    ) : (
-                      <button className="success" onClick={() => reactivate(t._id)}>
-                        Reactivate
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    <td>
+                      {t.activated ? (
+                        <button className="danger" onClick={() => deactivate(t._id)}>
+                          Deactivate
+                        </button>
+                      ) : (
+                        <button className="success" onClick={() => reactivate(t._id)}>
+                          Reactivate
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
 
         {filtered.length === 0 && <p>No technicians found.</p>}
 
       </div>
+
+      {toast && <div className="toast-msg">{toast}</div>}
     </div>
   );
 }

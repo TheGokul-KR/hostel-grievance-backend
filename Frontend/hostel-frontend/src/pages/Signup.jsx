@@ -7,21 +7,16 @@ function Signup() {
   const navigate = useNavigate();
 
   const [role, setRole] = useState("Student");
-
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState(1);
-
   const [msg, setMsg] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
-
   const [timer, setTimer] = useState(0);
 
-  // ================= RESTORE STATE =================
   useEffect(() => {
     const saved = sessionStorage.getItem("signup_data");
     if (saved) {
@@ -34,7 +29,6 @@ function Signup() {
     }
   }, []);
 
-  // ================= PASSWORD STRENGTH =================
   const passwordStrength = () => {
     let score = 0;
     if (password.length >= 8) score++;
@@ -46,22 +40,17 @@ function Signup() {
 
   const strength = passwordStrength();
 
-  // ================= OTP TIMER =================
   useEffect(() => {
     if (timer === 0) return;
     const i = setInterval(() => setTimer(t => t - 1), 1000);
     return () => clearInterval(i);
   }, [timer]);
 
-  useEffect(() => {
-    setTimer(0);
-  }, [role]);
+  useEffect(() => setTimer(0), [role]);
 
-  // ================= SEND OTP =================
   const handleSendOTP = async (e) => {
     e.preventDefault();
-    setMsg("");
-    setStatus("");
+    setMsg(""); setStatus("");
 
     if (!identifier || !password || !confirm) {
       setMsg("All fields are required");
@@ -77,50 +66,37 @@ function Signup() {
 
     try {
       setLoading(true);
-
       const cleanId = identifier.trim().toUpperCase();
 
-      const endpoint =
-        role === "Student"
-          ? "/auth/student-signup"
-          : "/auth/technician-signup";
+      const endpoint = role === "Student"
+        ? "/auth/student-signup"
+        : "/auth/technician-signup";
 
-      const payload =
-        role === "Student"
-          ? { regNo: cleanId, password }
-          : { techId: cleanId, password };
+      const payload = role === "Student"
+        ? { regNo: cleanId, password }
+        : { techId: cleanId, password };
 
       const res = await api.post(endpoint, payload);
 
-      if (!res.data || !res.data.message) {
-        throw new Error("OTP not sent properly");
-      }
-
       sessionStorage.setItem("signup_data", JSON.stringify({
-        role,
-        identifier: cleanId,
-        password,
-        step: 2
+        role, identifier: cleanId, password, step: 2
       }));
 
       setMsg(res.data.message || "OTP sent");
       setStatus("success");
       setStep(2);
       setTimer(30);
-
     } catch (err) {
-      setMsg(err.response?.data?.message || err.message || "OTP send failed");
+      setMsg(err.response?.data?.message || "OTP send failed");
       setStatus("error");
     } finally {
       setLoading(false);
     }
   };
 
-  // ================= VERIFY OTP =================
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
-    setMsg("");
-    setStatus("");
+    setMsg(""); setStatus("");
 
     if (!otp || otp.length !== 6) {
       setMsg("Enter valid 6 digit OTP");
@@ -130,69 +106,53 @@ function Signup() {
 
     try {
       setLoading(true);
-
       const cleanId = identifier.trim().toUpperCase();
 
-      const endpoint =
-        role === "Student"
-          ? "/auth/student-verify-otp"
-          : "/auth/technician-verify-otp";
+      const endpoint = role === "Student"
+        ? "/auth/student-verify-otp"
+        : "/auth/technician-verify-otp";
 
-      const payload =
-        role === "Student"
-          ? { regNo: cleanId, otp, password }
-          : { techId: cleanId, otp, password };
+      const payload = role === "Student"
+        ? { regNo: cleanId, otp, password }
+        : { techId: cleanId, otp, password };
 
       const res = await api.post(endpoint, payload);
 
-      if (!res.data || !res.data.message) {
-        throw new Error("Account not created");
-      }
-
       sessionStorage.removeItem("signup_data");
-
       setMsg(res.data.message || "Account created");
       setStatus("success");
       setStep(3);
 
       setTimeout(() => navigate("/"), 1600);
-
     } catch (err) {
-      setMsg(err.response?.data?.message || err.message || "OTP verification failed");
+      setMsg(err.response?.data?.message || "OTP verification failed");
       setStatus("error");
     } finally {
       setLoading(false);
     }
   };
 
-  // ================= RESEND OTP =================
   const resendOTP = async () => {
     if (timer > 0 || loading) return;
 
     try {
       setLoading(true);
-
       const cleanId = identifier.trim().toUpperCase();
 
-      const endpoint =
-        role === "Student"
-          ? "/auth/student-signup"
-          : "/auth/technician-signup";
+      const endpoint = role === "Student"
+        ? "/auth/student-signup"
+        : "/auth/technician-signup";
 
-
-
-      const payload =
-        role === "Student"
-          ? { regNo: cleanId, password }
-          : { techId: cleanId, password };
+      const payload = role === "Student"
+        ? { regNo: cleanId, password }
+        : { techId: cleanId, password };
 
       await api.post(endpoint, payload);
-
       setTimer(30);
       setMsg("OTP resent");
       setStatus("success");
-    } catch (err) {
-      setMsg(err.response?.data?.message || "OTP resend failed");
+    } catch {
+      setMsg("OTP resend failed");
       setStatus("error");
     } finally {
       setLoading(false);
@@ -204,12 +164,8 @@ function Signup() {
       <div className={`auth-glass ${status}`}>
 
         <div className="auth-brand">
-          <h1 className="brand-title">
-            Hostel Grievance <span>&</span> Compliance
-          </h1>
-          <h2 className="brand-subtitle">
-            Management System
-          </h2>
+          <h1 className="brand-title">Hostel Grievance <span>&</span> Compliance</h1>
+          <h2 className="brand-subtitle">Management System</h2>
         </div>
 
         <h3 className="auth-title">
@@ -223,55 +179,33 @@ function Signup() {
         {step === 1 && (
           <form onSubmit={handleSendOTP} className="auth-form">
 
-            <select
-              className="role-select"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-            >
+            <select className="role-select" value={role} onChange={e => setRole(e.target.value)}>
               <option>Student</option>
               <option>Technician</option>
             </select>
 
             <div className="input-group">
-              <input
-                required
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value.toUpperCase())}
-              />
-              <label>
-                {role === "Student" ? "Register Number" : "Technician ID"}
-              </label>
+              <input placeholder=" " required value={identifier}
+                onChange={e => setIdentifier(e.target.value.toUpperCase())} />
+              <label>{role === "Student" ? "Register Number" : "Technician ID"}</label>
             </div>
 
             <div className="input-group">
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <input placeholder=" " type="password" required value={password}
+                onChange={e => setPassword(e.target.value)} />
               <label>Password</label>
             </div>
 
-            <div style={{ fontSize: 11, color: "#c7d2fe" }}>
+            <div className="strength-text">
               Strength:
-              <span style={{ color:
-                strength <= 1 ? "#ef4444" :
-                strength === 2 ? "#facc15" :
-                "#22c55e"
-              }}>
-                {" "}
-                {strength <= 1 ? "Weak" : strength === 2 ? "Medium" : "Strong"}
+              <span className={`strength-${strength}`}>
+                {strength <= 1 ? " Weak" : strength === 2 ? " Medium" : " Strong"}
               </span>
             </div>
 
             <div className="input-group">
-              <input
-                type="password"
-                required
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-              />
+              <input placeholder=" " type="password" required value={confirm}
+                onChange={e => setConfirm(e.target.value)} />
               <label>Confirm Password</label>
             </div>
 
@@ -285,12 +219,8 @@ function Signup() {
           <form onSubmit={handleVerifyOTP} className="auth-form">
 
             <div className="input-group">
-              <input
-                required
-                maxLength={6}
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-              />
+              <input placeholder=" " required maxLength={6} value={otp}
+                onChange={e => setOtp(e.target.value.replace(/\D/g, ""))} />
               <label>Enter OTP</label>
             </div>
 
@@ -298,28 +228,17 @@ function Signup() {
               {loading ? "Verifying..." : "Verify OTP"}
             </button>
 
-            <div style={{ textAlign: "center", marginTop: 10, fontSize: 12 }}>
-              {timer > 0 ? (
-                <span>Resend OTP in {timer}s</span>
-              ) : (
-                <span
-                  onClick={resendOTP}
-                  style={{ color: "#38bdf8", cursor: "pointer" }}
-                >
-                  Resend OTP
-                </span>
-              )}
+            <div className="otp-resend">
+              {timer > 0 ? `Resend OTP in ${timer}s` :
+                <span onClick={resendOTP}>Resend OTP</span>}
             </div>
-
           </form>
         )}
 
         {step === 3 && (
-          <div style={{ textAlign: "center", color: "#22c55e", fontWeight: 700 }}>
+          <div className="signup-success">
             🎉 Account created successfully
-            <p style={{ fontSize: 13, color: "#c7d2fe", marginTop: 10 }}>
-              Redirecting to login…
-            </p>
+            <p>Redirecting to login…</p>
           </div>
         )}
 

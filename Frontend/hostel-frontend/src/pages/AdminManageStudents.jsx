@@ -9,6 +9,8 @@ function AdminManageStudents() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [toast, setToast] = useState("");
+
   const [form, setForm] = useState({
     regNo: "",
     name: "",
@@ -63,17 +65,24 @@ function AdminManageStudents() {
       roomNumber: ""
     });
 
+    setToast("Student added successfully");
+    setTimeout(() => setToast(""), 2000);
+
     fetchStudents();
   };
 
   const deactivate = async id => {
     if (!window.confirm("Deactivate this student?")) return;
     await api.patch(`/admin/students/${id}/deactivate`);
+    setToast("Student deactivated");
+    setTimeout(() => setToast(""), 2000);
     fetchStudents();
   };
 
   const reactivate = async id => {
     await api.patch(`/admin/students/${id}/reactivate`);
+    setToast("Student reactivated");
+    setTimeout(() => setToast(""), 2000);
     fetchStudents();
   };
 
@@ -94,7 +103,7 @@ function AdminManageStudents() {
 
   return (
     <div className="admin-manage-bg">
-      <div className="admin-manage-card">
+      <div className="admin-manage-card animated-fade">
 
         <button className="back-btn" onClick={() => navigate("/admin")}>
           ← Back to Dashboard
@@ -103,12 +112,12 @@ function AdminManageStudents() {
         <h2>Manage Students</h2>
 
         {/* ADD FORM */}
-        <form className="admin-form" onSubmit={addStudent}>
+        <form className="admin-form glass" onSubmit={addStudent}>
           <input name="regNo" placeholder="Register No" value={form.regNo} onChange={handleChange} required />
           <input name="name" placeholder="Name" value={form.name} onChange={handleChange} required />
           <input name="email" placeholder="Email" value={form.email} onChange={handleChange} required />
           <input name="roomNumber" placeholder="Room Number" value={form.roomNumber} onChange={handleChange} required />
-          <button type="submit">Add Student</button>
+          <button type="submit" className="primary-btn">Add Student</button>
         </form>
 
         {/* SEARCH */}
@@ -119,9 +128,10 @@ function AdminManageStudents() {
           onChange={e => setSearch(e.target.value)}
         />
 
-        {loading && <p>Loading students...</p>}
+        {loading && <p className="loading-text">Loading students...</p>}
 
         {/* LIST */}
+        <div className="table-wrapper">
         <table className="admin-table">
           <thead>
             <tr>
@@ -141,18 +151,16 @@ function AdminManageStudents() {
               const stats = getStats(s.regNo);
 
               return (
-                <tr key={s._id}>
+                <tr key={s._id} className="row-hover">
                   <td>{s.regNo}</td>
                   <td>{s.name}</td>
                   <td>{s.email}</td>
                   <td>{s.roomNumber}</td>
 
-                  {/* ACCOUNT CREATED */}
                   <td>
                     {s.userExists ? "Created" : "Not Created"}
                   </td>
 
-                  {/* ACCOUNT ACTIVE */}
                   <td className={s.userActive ? "status-active" : "status-inactive"}>
                     {s.userActive ? "Active" : "Inactive"}
                   </td>
@@ -181,10 +189,18 @@ function AdminManageStudents() {
             })}
           </tbody>
         </table>
+        </div>
 
         {filtered.length === 0 && !loading && <p>No students found.</p>}
 
       </div>
+
+      {toast && (
+        <div className="toast-msg">
+          {toast}
+        </div>
+      )}
+
     </div>
   );
 }
