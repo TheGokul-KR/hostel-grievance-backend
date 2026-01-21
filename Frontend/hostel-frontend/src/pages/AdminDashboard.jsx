@@ -131,45 +131,51 @@ function AdminDashboard() {
     selected?.status === stage ? "journey-step active" : "journey-step";
 
   return (
-    <div className={`admin-bg ${criticalMode ? "critical-mode" : ""}`}>
+    <div className={`admin-shell ${criticalMode ? "critical" : ""}`}>
 
-      <div className="admin-top">
-        <h2>Administrator Dashboard</h2>
-        <button className="admin-logout" onClick={logout}>Logout</button>
+      {/* ===== TOP BAR ===== */}
+      <div className="admin-topbar">
+        <div className="admin-title">Hostel Administration Panel</div>
+        <button className="admin-btn logout" onClick={logout}>Logout</button>
       </div>
 
-      <div className="admin-health-panel">
-        <div>🟢 Active: {pendingCount}</div>
-        <div>✅ Completed: {completedCount}</div>
-        <div>⏱ Avg Resolution: {avgResolution}</div>
-        <div className="danger">🚨 Ragging: {ragging.length}</div>
-        <div className="danger">⚠ Overdue: {overdue.length}</div>
+      {/* ===== KPI BAR ===== */}
+      <div className="admin-kpi">
+        <div className="kpi-card"><b>{pendingCount}</b><span>Active</span></div>
+        <div className="kpi-card"><b>{completedCount}</b><span>Completed</span></div>
+        <div className="kpi-card"><b>{avgResolution}</b><span>Avg Time</span></div>
+        <div className="kpi-card danger"><b>{ragging.length}</b><span>Ragging</span></div>
+        <div className="kpi-card danger"><b>{overdue.length}</b><span>Overdue</span></div>
       </div>
 
       {criticalMode && (
-        <div className="critical-banner">
-          ⚠ CRITICAL MODE ACTIVE — Immediate attention required
+        <div className="admin-alert">
+          ⚠ Critical operational risk detected. Immediate action required.
         </div>
       )}
 
-      <div className="admin-layout">
+      <div className="admin-main">
 
-        <div className="admin-menu">
-          <div onClick={() => { setPage("NORMAL"); setSelected(null); }}>📄 Complaints</div>
-          <div onClick={() => { setPage("RAGGING"); setSelected(null); }}>🚨 Ragging</div>
-          <div onClick={() => { setPage("OVERDUE"); setSelected(null); }}>⏱ Overdue</div>
+        {/* ===== SIDE NAV ===== */}
+        <div className="admin-nav">
+          <button onClick={() => { setPage("NORMAL"); setSelected(null); }}>Complaints</button>
+          <button onClick={() => { setPage("RAGGING"); setSelected(null); }}>Ragging</button>
+          <button onClick={() => { setPage("OVERDUE"); setSelected(null); }}>Overdue</button>
+
           <hr/>
-          <div onClick={() => navigate("/admin/students")}>👨‍🎓 Students</div>
-          <div onClick={() => navigate("/admin/technicians")}>🛠 Technicians</div>
-          <div onClick={() => navigate("/admin/notices")}>📢 Notices</div>
+
+          <button onClick={() => navigate("/admin/students")}>Students</button>
+          <button onClick={() => navigate("/admin/technicians")}>Technicians</button>
+          <button onClick={() => navigate("/admin/notices")}>Notices</button>
         </div>
 
-        <div className="admin-content">
+        {/* ===== CONTENT ===== */}
+        <div className="admin-panel">
 
 {/* ================= NORMAL ================= */}
 {page === "NORMAL" && (
 <>
-<h3>All Complaints</h3>
+<h3 className="panel-title">All Complaints</h3>
 
 <input
   className="admin-search"
@@ -179,19 +185,22 @@ function AdminDashboard() {
 />
 
 {!selected && filteredAll.map(c => (
-<div key={c._id} className="admin-card" onClick={() => {
+<div key={c._id} className="list-card" onClick={() => {
   selectedIdRef.current = c._id;
   setSelected(c);
 }}>
-<b>{c.category}</b> — {c.status}
+<div className="list-head">
+  <span>{c.category}</span>
+  <span className="status">{c.status}</span>
+</div>
 <p>{(c.complaintText || "").slice(0,120)}...</p>
 </div>
 ))}
 
 {selected && (
-<div className="admin-detail">
+<div className="detail-panel">
 
-<button onClick={() => setSelected(null)}>⬅ Back</button>
+<button className="back-btn" onClick={() => setSelected(null)}>Back</button>
 
 <div className="journey-bar">
   <div className={getStageClass("Pending")}>Submitted</div>
@@ -200,47 +209,22 @@ function AdminDashboard() {
   <div className={getStageClass("Completed")}>Completed</div>
 </div>
 
-<p><b>Status:</b> {selected.status}</p>
-<p><b>Room:</b> {selected.roomNumber}</p>
-<p><b>Category:</b> {selected.category}</p>
-<p><b>Technician:</b> {selected.technicianNameSnapshot || "Auto assigned"}</p>
+<div className="detail-grid">
+  <div><b>Status</b><span>{selected.status}</span></div>
+  <div><b>Room</b><span>{selected.roomNumber}</span></div>
+  <div><b>Category</b><span>{selected.category}</span></div>
+  <div><b>Technician</b><span>{selected.technicianNameSnapshot || "Auto"}</span></div>
+</div>
 
 <div className="detail-text">{selected.complaintText || ""}</div>
 
-{Array.isArray(selected.images) && selected.images.length > 0 && (
+{Array.isArray(selected.images) && (
 <div className="image-grid">
 {selected.images.map((img,i)=>(
-<img key={i} src={normalizeImage(img)} alt="complaint" onClick={() => setPreviewImg(normalizeImage(img))}/>
+<img key={i} src={normalizeImage(img)} alt="" onClick={()=>setPreviewImg(normalizeImage(img))}/>
 ))}
 </div>
 )}
-
-{Array.isArray(selected.repairImages) && selected.repairImages.length > 0 && (
-<>
-<h4>Repair Evidence</h4>
-<div className="image-grid">
-{selected.repairImages.map((img,i)=>(
-<img key={i} src={normalizeImage(img)} alt="repair" onClick={() => setPreviewImg(normalizeImage(img))}/>
-))}
-</div>
-</>
-)}
-
-{selected.rating && (
-<div className="rating-box">
-⭐ {selected.rating}/5
-<p>{selected.ratingFeedback}</p>
-</div>
-)}
-
-<div className="timeline-box">
-<h4>Timeline</h4>
-{Array.isArray(selected.statusHistory) && selected.statusHistory.length > 0 ? (
-selected.statusHistory.map((s,i)=>(
-<div key={i}><b>{s.status}</b> — {s.changedByRole}</div>
-))
-) : <p>No timeline available</p>}
-</div>
 
 </div>
 )}
@@ -250,46 +234,36 @@ selected.statusHistory.map((s,i)=>(
 {/* ================= RAGGING ================= */}
 {page === "RAGGING" && (
 <>
-<h3>Ragging Complaints</h3>
+<h3 className="panel-title">Ragging Complaints</h3>
 
 {!selected && ragging.map(c=>(
-<div key={c._id} className="ragging-card" onClick={()=>setSelected(c)}>
+<div key={c._id} className="list-card danger" onClick={()=>setSelected(c)}>
 <p>{(c.complaintText || "").slice(0,120)}...</p>
-<small>{c.adminReviewed ? "Reviewed" : "Pending Review"}</small>
+<span>{c.adminReviewed ? "Reviewed" : "Pending"}</span>
 </div>
 ))}
 
 {selected && (
-<div className="admin-detail">
+<div className="detail-panel">
 
-<button onClick={()=>setSelected(null)}>⬅ Back</button>
+<button className="back-btn" onClick={()=>setSelected(null)}>Back</button>
 
 <div className="detail-text">{selected.complaintText || ""}</div>
 
-{Array.isArray(selected.images) && selected.images.length > 0 && (
-<>
-<h4>Ragging Evidence Images</h4>
-<div className="image-grid">
-{selected.images.map((img,i)=>(
-<img key={i} src={normalizeImage(img)} alt="ragging" onClick={()=>setPreviewImg(normalizeImage(img))}/>
-))}
-</div>
-</>
-)}
-
 <textarea
+className="admin-remark"
 placeholder="Admin remark..."
 value={remark}
 onChange={e=>setRemark(e.target.value)}
 />
 
-<div className="admin-action-box">
+<div className="action-row">
 {!selected.adminReviewed && (
-<button onClick={()=>markReviewed(selected._id)}>
+<button className="admin-btn danger" onClick={()=>markReviewed(selected._id)}>
 Mark Reviewed
 </button>
 )}
-<button onClick={saveRemark}>
+<button className="admin-btn" onClick={saveRemark}>
 Save Remark
 </button>
 </div>
@@ -302,12 +276,11 @@ Save Remark
 {/* ================= OVERDUE ================= */}
 {page === "OVERDUE" && (
 <>
-<h3>Overdue Complaints</h3>
+<h3 className="panel-title">Overdue Complaints</h3>
 
 {overdue.map(c=>(
-<div key={c._id} className="admin-card danger" onClick={()=>{setSelected(c);setPage("NORMAL")}}>
+<div key={c._id} className="list-card danger" onClick={()=>{setSelected(c);setPage("NORMAL")}}>
 <b>{c.category}</b> — {c.status}
-<p>{(c.complaintText || "").slice(0,120)}...</p>
 </div>
 ))}
 
