@@ -72,10 +72,10 @@ const complaintSchema = new mongoose.Schema(
       trim: true
     },
 
-    // 🔒 LOCKED TO TECHNICIAN DEPARTMENTS
+    // 🔒 Technician categories ONLY
     category: {
       type: String,
-      enum: ["cleaning","electrical","plumbing","furniture","water","others"],
+      enum: ["cleaning","electrical","plumbing","furniture","water","others","ragging"],
       required: true,
       lowercase: true,
       index: true
@@ -83,9 +83,9 @@ const complaintSchema = new mongoose.Schema(
 
     roomNumber: {
       type: String,
-      required: true,
       trim: true,
-      index: true
+      index: true,
+      default: null
     },
 
     studentRegNo: {
@@ -248,6 +248,17 @@ complaintSchema.index({ category: 1, keywords: 1, status: 1 });
 
 // ================= LIFECYCLE GUARDS =================
 complaintSchema.pre("save", async function () {
+
+  // Ragging rules
+  if (this.isRagging) {
+    this.assignedTechnician = null;
+    this.technicianHistory = [];
+  }
+
+  if (!this.isRagging && !this.roomNumber) {
+    throw new Error("Room number required for non-ragging complaints");
+  }
+
   if (this.isModified("rating") && this.status !== "Completed") {
     throw new Error("Rating allowed only after completion");
   }
@@ -256,7 +267,7 @@ complaintSchema.pre("save", async function () {
     throw new Error("Completion requires student confirmation");
   }
 
-  if (this.status === "Resolved" && !this.assignedTechnician) {
+  if (this.status === "Resolved" && !this.assignedTechnician && !this.isRagging) {
     throw new Error("Resolved complaint must have technician");
   }
 });
@@ -270,9 +281,6 @@ complaintSchema.virtual("isOverdue").get(function () {
 
 complaintSchema.set("toJSON", { virtuals: true });
 complaintSchema.set("toObject", { virtuals: true });
-
-// ================= EXPORT =================
-
 
 // ================= AUTO CONFIRM HELPER =================
 complaintSchema.statics.autoConfirmExpired = async function () {
@@ -302,6 +310,7 @@ complaintSchema.statics.autoConfirmExpired = async function () {
 
   return complaints.length;
 };
+
 module.exports =
   mongoose.models.Complaint ||
   mongoose.model("Complaint", complaintSchema);
