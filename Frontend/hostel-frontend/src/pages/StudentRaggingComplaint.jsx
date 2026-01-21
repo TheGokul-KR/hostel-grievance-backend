@@ -12,7 +12,6 @@ function StudentRaggingComplaint() {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // ADD ONLY
   const [showSuccess, setShowSuccess] = useState(false);
 
   const rawRole = localStorage.getItem("role");
@@ -64,15 +63,14 @@ function StudentRaggingComplaint() {
       return;
     }
 
-    if (!roomNumber.trim()) {
-      alert("Room number is required for ragging complaint.");
-      return;
-    }
-
     const formData = new FormData();
     formData.append("complaintText", complaintText.trim());
     formData.append("category", "Ragging");
-    formData.append("roomNumber", roomNumber.trim());
+
+    if (roomNumber.trim()) {
+      formData.append("roomNumber", roomNumber.trim());
+    }
+
     formData.append("isAnonymous", isAnonymous ? "true" : "false");
     formData.append("isRagging", "true");
 
@@ -83,7 +81,6 @@ function StudentRaggingComplaint() {
     try {
       await api.post("/complaints", formData);
 
-      // ADD ONLY
       setShowSuccess(true);
 
       setTimeout(() => {
@@ -124,10 +121,9 @@ function StudentRaggingComplaint() {
           <input
             type="text"
             className="input-box"
-            placeholder="Enter room number involved"
+            placeholder="Enter room number involved (optional)"
             value={roomNumber}
             onChange={(e) => setRoomNumber(e.target.value)}
-            required
           />
 
           <textarea
