@@ -38,9 +38,9 @@ exports.createComplaint = async (req, res) => {
         ? req.files.map(f => f.filename)
         : [];
 
-    const finalRoom = isRagging ? roomNumber?.trim() : req.user.roomNumber;
+    const finalRoom = isRagging ? (roomNumber?.trim() || null) : req.user.roomNumber;
 
-    if (!finalRoom)
+    if (!isRagging && !finalRoom)
       return res.status(400).json({ message: "Room number required" });
 
     const complaint = await Complaint.create({
@@ -268,7 +268,7 @@ exports.rejectComplaint = async (req, res) => {
   return res.json(complaint);
 };
 
-// ---------------- RATING (FIXED ONLY) ----------------
+// ---------------- RATING ----------------
 
 exports.rateComplaint = async (req, res) => {
   const { rating, feedback, ratingFeedback } = req.body;
@@ -331,8 +331,21 @@ exports.markRaggingReviewed = async (req, res) => {
   const complaint = await Complaint.findById(req.params.id);
   if (!complaint) return res.status(404).json({ message: "Not found" });
 
+  if (!complaint.isRagging)
+    return res.status(400).json({ message: "Not a ragging complaint" });
+
   complaint.raggingReviewed = true;
   complaint.raggingReviewedAt = new Date();
+
+  complaint.adminReviewed = true;
+  complaint.adminReviewedAt = new Date();
+
+  complaint.statusHistory.push({
+    status: "Ragging Reviewed",
+    changedByRole: "Admin",
+    changedById: req.user.userId,
+    remark: "Ragging complaint reviewed by admin"
+  });
 
   await complaint.save();
   return res.json(complaint);
