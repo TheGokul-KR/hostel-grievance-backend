@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 import "../styles/notice.css";
@@ -8,6 +8,7 @@ function StudentNoticeBoard() {
   const [loading, setLoading] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
 
+  const fetchedRef = useRef(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -45,9 +46,11 @@ function StudentNoticeBoard() {
   };
 
   useEffect(() => {
-    if (authChecked) {
-      loadNotices();
-    }
+    if (!authChecked) return;
+    if (fetchedRef.current) return;
+
+    fetchedRef.current = true;
+    loadNotices();
   }, [authChecked]);
 
   const formatDate = (d) =>
