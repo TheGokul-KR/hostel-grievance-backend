@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import BackButton from "../components/BackButton";
 import api from "../services/api";
 import "../styles/dashboard.css";
 
@@ -25,8 +24,11 @@ function StudentDashboard() {
 
   const [detailComplaint, setDetailComplaint] = useState(null);
 
-  const [showWelcome, setShowWelcome] = useState(true);
-  const [showLogout, setShowLogout] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(
+    !sessionStorage.getItem("welcomeShown")
+  );
+
+  const [showLogoutPopup, setShowLogoutPopup] = useState(false);
 
   // 🔒 AUTH
   useEffect(() => {
@@ -36,9 +38,14 @@ function StudentDashboard() {
   }, [token, role, navigate]);
 
   useEffect(() => {
-    const t = setTimeout(() => setShowWelcome(false), 1500);
-    return () => clearTimeout(t);
-  }, []);
+    if (showWelcome) {
+      const t = setTimeout(() => {
+        setShowWelcome(false);
+        sessionStorage.setItem("welcomeShown", "true");
+      }, 1200);
+      return () => clearTimeout(t);
+    }
+  }, [showWelcome]);
 
   const loadStats = async () => {
     try {
@@ -57,12 +64,13 @@ function StudentDashboard() {
   }, []);
 
   const logout = () => {
-    if (!window.confirm("Logout from system?")) return;
-    setShowLogout(true);
-    setTimeout(() => {
-      localStorage.clear();
-      navigate("/", { replace: true });
-    }, 1200);
+    setShowLogoutPopup(true);
+  };
+
+  const confirmLogout = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    navigate("/", { replace: true });
   };
 
   const total = list.length;
@@ -134,26 +142,16 @@ function StudentDashboard() {
     }
   };
 
-  const formatImg = img =>
-    img?.startsWith("http") ? img : IMAGE_BASE + encodeURIComponent(img);
-
   return (
     <div className="sd-page">
 
       {showWelcome && (
-        <div className="sd-welcome-overlay fade-slide">
-          Welcome, {name} 👋
+        <div className="sd-welcome-overlay">
+          Welcome, {name}
         </div>
       )}
 
-      {showLogout && (
-        <div className="sd-logout-overlay fade-slide">
-          Logging out from Student Dashboard…
-        </div>
-      )}
-
-      <div className="sd-header fade-up">
-        <BackButton fallback="/" />
+      <div className="sd-header">
         <div>
           <h2>Hello, {name}</h2>
           <p>Your complaint control center</p>
@@ -161,11 +159,11 @@ function StudentDashboard() {
       </div>
 
       {needsAction.length > 0 && (
-        <div className="sd-section sd-alerts fade-up">
+        <div className="sd-section sd-alerts">
           <h3>Needs Your Action</h3>
 
           {needsAction.map(c => (
-            <div key={c._id} className="alert warning bounce-in">
+            <div key={c._id} className="alert warning">
               Complaint in Room {c.roomNumber} resolved.
               <div style={{ marginTop: 6 }}>
                 <button onClick={() => confirmComplaint(c._id)}>Confirm</button>
@@ -177,34 +175,34 @@ function StudentDashboard() {
         </div>
       )}
 
-      <div className="sd-section fade-up">
+      <div className="sd-section">
         <h3>Complaint Status Overview</h3>
 
         <div className="fancy-status">
-          <div className="status-card orange float-card"><div className="status-ring"></div><h3>{pending}</h3><p>Pending</p></div>
-          <div className="status-card blue float-card"><div className="status-ring"></div><h3>{inProgress}</h3><p>In Progress</p></div>
-          <div className="status-card purple float-card"><div className="status-ring"></div><h3>{resolved}</h3><p>Resolved</p></div>
-          <div className="status-card green float-card"><div className="status-ring"></div><h3>{completed}</h3><p>Completed</p></div>
+          <div className="status-card orange"><h3>{pending}</h3><p>Pending</p></div>
+          <div className="status-card blue"><h3>{inProgress}</h3><p>In Progress</p></div>
+          <div className="status-card purple"><h3>{resolved}</h3><p>Resolved</p></div>
+          <div className="status-card green"><h3>{completed}</h3><p>Completed</p></div>
         </div>
       </div>
 
-      <div className="sd-actions fade-up">
-        <div className="sd-tile blue hover-pop" onClick={() => navigate("/student/submit")}>New Complaint</div>
-        <div className="sd-tile red hover-pop" onClick={() => navigate("/student/ragging")}>Ragging</div>
-        <div className="sd-tile purple hover-pop" onClick={() => navigate("/student/history")}>History</div>
-        <div className="sd-tile teal hover-pop" onClick={() => navigate("/student/notices")}>Notices</div>
-        <div className="sd-tile gray hover-pop" onClick={logout}>Logout</div>
+      <div className="sd-actions">
+        <div className="sd-tile blue" onClick={() => navigate("/student/submit")}>New Complaint</div>
+        <div className="sd-tile red" onClick={() => navigate("/student/ragging")}>Ragging</div>
+        <div className="sd-tile purple" onClick={() => navigate("/student/history")}>History</div>
+        <div className="sd-tile teal" onClick={() => navigate("/student/notices")}>Notices</div>
+        <div className="sd-tile gray" onClick={logout}>Logout</div>
       </div>
 
-      <div className="sd-section sd-kpi fade-up">
-        <div className="kpi-card pop-in"><h4>{avgResolution || 0} days</h4><span>Avg Resolution</span></div>
-        <div className="kpi-card pop-in"><h4>{needsAction.length}</h4><span>Awaiting Confirmation</span></div>
-        <div className="kpi-card pop-in"><h4>{resolved}</h4><span>Resolved</span></div>
+      <div className="sd-section sd-kpi">
+        <div className="kpi-card"><h4>{avgResolution || 0} days</h4><span>Avg Resolution</span></div>
+        <div className="kpi-card"><h4>{needsAction.length}</h4><span>Awaiting Confirmation</span></div>
+        <div className="kpi-card"><h4>{resolved}</h4><span>Resolved</span></div>
       </div>
 
       {ratingTarget && (
-        <div className="image-modal fade-bg" onClick={() => setRatingTarget(null)}>
-          <div className="rating-box zoom-in" onClick={e => e.stopPropagation()}>
+        <div className="image-modal" onClick={() => setRatingTarget(null)}>
+          <div className="rating-box" onClick={e => e.stopPropagation()}>
             <h3>Rate Resolution</h3>
 
             <select value={rating} onChange={e => setRating(+e.target.value)}>
@@ -226,6 +224,20 @@ function StudentDashboard() {
                 {ratingLoading ? "Submitting..." : "Submit"}
               </button>
               <button onClick={() => setRatingTarget(null)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLogoutPopup && (
+        <div className="image-modal" onClick={() => setShowLogoutPopup(false)}>
+          <div className="rating-box" onClick={e => e.stopPropagation()}>
+            <h3>Logout?</h3>
+            <p style={{ fontSize:13,color:"#64748b" }}>Do you really want to logout?</p>
+
+            <div style={{ marginTop: 14 }}>
+              <button onClick={confirmLogout}>Yes, Logout</button>
+              <button onClick={() => setShowLogoutPopup(false)}>Cancel</button>
             </div>
           </div>
         </div>
