@@ -6,18 +6,22 @@ import "../styles/notice.css";
 function StudentNoticeBoard() {
   const [notices, setNotices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
 
   const navigate = useNavigate();
 
-  const rawRole = localStorage.getItem("role");
-  const role = rawRole ? rawRole.toLowerCase() : null;
-
   useEffect(() => {
     const token = localStorage.getItem("token");
+    const rawRole = localStorage.getItem("role");
+    const role = rawRole ? rawRole.trim().toLowerCase() : null;
+
     if (!token || role !== "student") {
       navigate("/", { replace: true });
+      return;
     }
-  }, [navigate, role]);
+
+    setAuthChecked(true);
+  }, [navigate]);
 
   const loadNotices = async () => {
     try {
@@ -41,8 +45,10 @@ function StudentNoticeBoard() {
   };
 
   useEffect(() => {
-    loadNotices();
-  }, []);
+    if (authChecked) {
+      loadNotices();
+    }
+  }, [authChecked]);
 
   const formatDate = (d) =>
     new Date(d).toLocaleString("en-IN", {
@@ -53,10 +59,11 @@ function StudentNoticeBoard() {
       minute: "2-digit"
     });
 
+  if (!authChecked) return null;
+
   return (
     <div className="notice-bg">
 
-      {/* HEADER */}
       <div className="notice-header glass">
         <div className="notice-title">
           📢 Hostel Notices
@@ -67,7 +74,6 @@ function StudentNoticeBoard() {
         </button>
       </div>
 
-      {/* CONTENT */}
       <div className="notice-container">
 
         {loading && <p className="empty-msg">Loading notices…</p>}
@@ -86,10 +92,8 @@ function StudentNoticeBoard() {
             style={{ animationDelay: `${i * 0.08}s` }}
           >
 
-            {/* STRIPE */}
             <div className={`notice-stripe ${n.priority?.toLowerCase()}`} />
 
-            {/* PIN */}
             {n.pinned && (
               <div className="pin-badge">📌 Pinned</div>
             )}
