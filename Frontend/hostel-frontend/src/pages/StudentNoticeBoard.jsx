@@ -6,7 +6,6 @@ import "../styles/notice.css";
 function StudentNoticeBoard() {
   const [notices, setNotices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [authChecked, setAuthChecked] = useState(false);
 
   const fetchedRef = useRef(false);
   const navigate = useNavigate();
@@ -20,13 +19,12 @@ function StudentNoticeBoard() {
       navigate("/", { replace: true });
       return;
     }
-
-    setAuthChecked(true);
   }, [navigate]);
 
   const loadNotices = async () => {
     try {
       const res = await api.get("/notices");
+
       let data = Array.isArray(res.data) ? res.data : [];
 
       data.sort((a, b) => {
@@ -38,20 +36,20 @@ function StudentNoticeBoard() {
       });
 
       setNotices(data);
-    } catch {
-      setNotices([]);
+    } catch (err) {
+      console.error("Notice load failed:", err);
+      // ❌ DO NOT wipe existing notices
+      // keep previous state
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (!authChecked) return;
     if (fetchedRef.current) return;
-
     fetchedRef.current = true;
     loadNotices();
-  }, [authChecked]);
+  }, []);
 
   const formatDate = (d) =>
     new Date(d).toLocaleString("en-IN", {
@@ -61,8 +59,6 @@ function StudentNoticeBoard() {
       hour: "2-digit",
       minute: "2-digit"
     });
-
-  if (!authChecked) return null;
 
   return (
     <div className="notice-bg">
