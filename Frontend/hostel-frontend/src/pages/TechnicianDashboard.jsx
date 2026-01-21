@@ -42,7 +42,7 @@ function TechnicianDashboard() {
   const lastCountRef = useRef(0);
   const intervalRef = useRef(null);
 
-  // 🔒 AUTH GUARD
+  // 🔒 AUTH
   useEffect(() => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
@@ -127,42 +127,48 @@ function TechnicianDashboard() {
   });
 
   return (
-    <div className="tech-bg">
+    <div className="tech-shell">
 
       {newAlert && (
-        <div className="tech-new-alert">
-          🔔 New complaint received
+        <div className="tech-toast">
+          New complaint assigned
         </div>
       )}
 
-      <div className="tech-topbar glass-panel">
+      {/* ===== TOP BAR ===== */}
+      <div className="tech-topbar">
         <div>
-          <h2 className="tech-title">Technician Dashboard</h2>
-          <span className="dept-badge">{department}</span>
+          <div className="tech-title">Technician Panel</div>
+          <div className="dept-badge">{department}</div>
         </div>
 
         <div className="tech-actions">
-          <button className="radar-btn" onClick={() => navigate("/technician/radar")}>
+          <button className="tech-btn" onClick={() => navigate("/technician/radar")}>
             Radar
           </button>
 
-          <div className="profile-badge">{techName}</div>
+          <div className="tech-user">{techName}</div>
           <NotificationBell />
 
-          <button className="tech-logout" onClick={handleLogout}>Logout</button>
+          <button className="tech-btn danger" onClick={handleLogout}>
+            Logout
+          </button>
         </div>
       </div>
 
-      <div className="tech-layout">
+      <div className="tech-main">
 
+        {/* ===== LIST ===== */}
         <div className="tech-list">
-          <div className="tech-search-filter">
+
+          <div className="tech-filter-bar">
             <input
               className="tech-search"
-              placeholder="Search complaint or room..."
+              placeholder="Search..."
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
+
             <select
               className="tech-filter"
               value={statusFilter}
@@ -179,50 +185,55 @@ function TechnicianDashboard() {
           {filtered.map(c => (
             <div
               key={c._id}
-              className={`tech-card glass-card 
+              className={`tech-list-card
                 ${selectedComplaint?._id === c._id ? "active" : ""}
-                ${c.priority === "High" ? "high-priority" : ""}
+                ${c.priority === "High" ? "high" : ""}
               `}
               onClick={() => {
                 selectedIdRef.current = c._id;
                 setSelectedComplaint(c);
               }}
             >
-              <div className="card-head">
-                <span className={`status ${c.status.replace(/\s/g, "")}`}>{c.status}</span>
-                <span className="room">Room {c.roomNumber}</span>
+              <div className="list-head">
+                <span className={`status ${c.status.replace(/\s/g, "")}`}>
+                  {c.status}
+                </span>
+                <span>Room {c.roomNumber}</span>
               </div>
 
-              <p className="card-title">
-                {(c.complaintText || "").slice(0, 80)}...
-              </p>
+              <div className="list-text">
+                {(c.complaintText || "").slice(0, 90)}...
+              </div>
 
-              <small className="card-meta">
-                {c.priority} Priority • {c.category}
-              </small>
+              <div className="list-meta">
+                {c.priority} • {c.category}
+              </div>
             </div>
           ))}
         </div>
 
-        <div className="tech-detail glass-panel">
+        {/* ===== DETAIL ===== */}
+        <div className="tech-detail">
 
           {!selectedComplaint ? (
-            <div className="tech-empty">Select a complaint to view details</div>
+            <div className="tech-empty">
+              Select a complaint
+            </div>
           ) : (
             <>
-              <h3 className="detail-title">Complaint Detail</h3>
+              <div className="detail-title">Complaint Detail</div>
 
               <div className="detail-box">
                 {selectedComplaint.complaintText || ""}
               </div>
 
-              <div className="detail-row">
-                <span><b>Category:</b> {selectedComplaint.category}</span>
-                <span><b>Room:</b> {selectedComplaint.roomNumber}</span>
+              <div className="detail-grid">
+                <div><b>Category</b><span>{selectedComplaint.category}</span></div>
+                <div><b>Room</b><span>{selectedComplaint.roomNumber}</span></div>
               </div>
 
               {!selectedComplaint.isRagging && (
-                <div className="repair-preview">
+                <div className="evidence-box">
                   <h4>Student Evidence</h4>
 
                   {selectedComplaint.images?.length ? (
@@ -231,13 +242,12 @@ function TechnicianDashboard() {
                         <img
                           key={i}
                           src={normalizeImage(img)}
-                          className="repair-thumb"
                           onClick={() => setPreviewImage(normalizeImage(img))}
                         />
                       ))}
                     </div>
                   ) : (
-                    <p className="muted">No student images uploaded</p>
+                    <p className="muted">No images uploaded</p>
                   )}
                 </div>
               )}
@@ -251,7 +261,7 @@ function TechnicianDashboard() {
 
               {NEXT_STATUS[selectedComplaint.status] && (
                 <button
-                  className="accept-btn"
+                  className="tech-btn primary"
                   disabled={loadingStatus}
                   onClick={() =>
                     updateStatus(
@@ -260,7 +270,9 @@ function TechnicianDashboard() {
                     )
                   }
                 >
-                  {loadingStatus ? "Updating..." : `Move to ${NEXT_STATUS[selectedComplaint.status]}`}
+                  {loadingStatus
+                    ? "Updating..."
+                    : `Move to ${NEXT_STATUS[selectedComplaint.status]}`}
                 </button>
               )}
             </>
@@ -270,7 +282,7 @@ function TechnicianDashboard() {
 
       {previewImage && (
         <div className="image-modal" onClick={() => setPreviewImage(null)}>
-          <img src={previewImage} className="modal-img" />
+          <img src={previewImage} />
         </div>
       )}
     </div>
