@@ -3,10 +3,6 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../styles/dashboard.css";
 
-const IMAGE_BASE = import.meta.env.VITE_API_BASE_URL
-  ? import.meta.env.VITE_API_BASE_URL.replace(/\/api$/, "") + "/uploads/"
-  : "http://localhost:5000/uploads/";
-
 function StudentDashboard() {
   const navigate = useNavigate();
 
@@ -73,7 +69,6 @@ function StudentDashboard() {
     navigate("/", { replace: true });
   };
 
-  const total = list.length;
   const pending = list.filter(c => c.status === "Pending").length;
   const inProgress = list.filter(c => c.status === "In Progress").length;
   const resolved = list.filter(c => c.status === "Resolved").length;
@@ -134,7 +129,6 @@ function StudentDashboard() {
       setRating(5);
       setFeedback("");
       loadStats();
-
     } catch {
       alert("Rating submission failed");
     } finally {
@@ -147,25 +141,38 @@ function StudentDashboard() {
 
       {showWelcome && (
         <div className="sd-welcome-overlay">
-          Welcome, {name}
+          <div className="sd-welcome-box">
+            Welcome back, {name} 👋
+          </div>
         </div>
       )}
 
+      {/* HEADER */}
       <div className="sd-header">
-        <div>
-          <h2>Hello, {name}</h2>
-          <p>Your complaint control center</p>
+        <div className="sd-header-text">
+          <h2>Dashboard</h2>
+          <span>{name}</span>
         </div>
+        <button className="sd-logout-btn" onClick={logout}>Logout</button>
       </div>
 
+      {/* QUICK STATS */}
+      <div className="sd-kpi">
+        <div className="kpi-card"><h4>{pending}</h4><span>Pending</span></div>
+        <div className="kpi-card"><h4>{inProgress}</h4><span>In Progress</span></div>
+        <div className="kpi-card"><h4>{resolved}</h4><span>Resolved</span></div>
+        <div className="kpi-card"><h4>{completed}</h4><span>Completed</span></div>
+      </div>
+
+      {/* ACTION REQUIRED */}
       {needsAction.length > 0 && (
         <div className="sd-section sd-alerts">
           <h3>Needs Your Action</h3>
 
           {needsAction.map(c => (
             <div key={c._id} className="alert warning">
-              Complaint in Room {c.roomNumber} resolved.
-              <div style={{ marginTop: 6 }}>
+              Room {c.roomNumber} complaint resolved.
+              <div className="alert-actions">
                 <button onClick={() => confirmComplaint(c._id)}>Confirm</button>
                 <button onClick={() => rejectComplaint(c._id)}>Reject</button>
                 <button onClick={() => setDetailComplaint(c)}>View</button>
@@ -175,31 +182,22 @@ function StudentDashboard() {
         </div>
       )}
 
-      <div className="sd-section">
-        <h3>Complaint Status Overview</h3>
-
-        <div className="fancy-status">
-          <div className="status-card orange"><h3>{pending}</h3><p>Pending</p></div>
-          <div className="status-card blue"><h3>{inProgress}</h3><p>In Progress</p></div>
-          <div className="status-card purple"><h3>{resolved}</h3><p>Resolved</p></div>
-          <div className="status-card green"><h3>{completed}</h3><p>Completed</p></div>
-        </div>
-      </div>
-
+      {/* MAIN ACTIONS */}
       <div className="sd-actions">
         <div className="sd-tile blue" onClick={() => navigate("/student/submit")}>New Complaint</div>
         <div className="sd-tile red" onClick={() => navigate("/student/ragging")}>Ragging</div>
         <div className="sd-tile purple" onClick={() => navigate("/student/history")}>History</div>
         <div className="sd-tile teal" onClick={() => navigate("/student/notices")}>Notices</div>
-        <div className="sd-tile gray" onClick={logout}>Logout</div>
       </div>
 
+      {/* INSIGHTS */}
       <div className="sd-section sd-kpi">
         <div className="kpi-card"><h4>{avgResolution || 0} days</h4><span>Avg Resolution</span></div>
         <div className="kpi-card"><h4>{needsAction.length}</h4><span>Awaiting Confirmation</span></div>
         <div className="kpi-card"><h4>{resolved}</h4><span>Resolved</span></div>
       </div>
 
+      {/* RATING MODAL */}
       {ratingTarget && (
         <div className="image-modal" onClick={() => setRatingTarget(null)}>
           <div className="rating-box" onClick={e => e.stopPropagation()}>
@@ -219,7 +217,7 @@ function StudentDashboard() {
               onChange={e => setFeedback(e.target.value)}
             />
 
-            <div style={{ marginTop: 10 }}>
+            <div className="modal-actions">
               <button disabled={ratingLoading} onClick={submitRating}>
                 {ratingLoading ? "Submitting..." : "Submit"}
               </button>
@@ -229,13 +227,14 @@ function StudentDashboard() {
         </div>
       )}
 
+      {/* LOGOUT MODAL */}
       {showLogoutPopup && (
         <div className="image-modal" onClick={() => setShowLogoutPopup(false)}>
           <div className="rating-box" onClick={e => e.stopPropagation()}>
             <h3>Logout?</h3>
-            <p style={{ fontSize:13,color:"#64748b" }}>Do you really want to logout?</p>
+            <p className="modal-text">Do you really want to logout?</p>
 
-            <div style={{ marginTop: 14 }}>
+            <div className="modal-actions">
               <button onClick={confirmLogout}>Yes, Logout</button>
               <button onClick={() => setShowLogoutPopup(false)}>Cancel</button>
             </div>
