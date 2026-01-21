@@ -81,73 +81,48 @@ function TechnicianRadar() {
   }, [complaints, now]);
 
   return (
-    <div className="tech-bg">
+    <div className="tech-shell">
 
-      {/* HEADER */}
-      <div className="tech-topbar glass-panel">
+      {/* TOP BAR */}
+      <div className="tech-topbar">
         <div>
-          <h2 className="tech-title">Technician Radar</h2>
-          <small style={{ color: "#c7d2fe" }}>System Intelligence View</small>
+          <div className="tech-title">Technician Radar</div>
+          <div className="dept-badge">Operational Intelligence</div>
         </div>
 
-        <button className="radar-btn" onClick={() => navigate("/technician")}>
-          Back to Dashboard
+        <button className="tech-btn" onClick={() => navigate("/technician")}>
+          Back
         </button>
       </div>
 
-      {/* METRIC RINGS */}
-      <div className="radar-rings">
-
-        <div className="radar-ring safe">
-          <span>{metrics.active}</span>
-          <p>Active</p>
-        </div>
-
-        <div className="radar-ring warning">
-          <span>{metrics.highPriority}</span>
-          <p>High Priority</p>
-        </div>
-
-        <div className="radar-ring critical">
-          <span>{metrics.aging24}</span>
-          <p>Aging &gt; 24h</p>
-        </div>
-
-        <div className="radar-ring info">
-          <span>{metrics.resolvedToday}</span>
-          <p>Resolved Today</p>
-        </div>
-
-      </div>
-
       {/* KPI GRID */}
-      <div className="radar-grid">
-
-        <div className="radar-card">
-          <b>Total Complaints</b>
-          <h3>{metrics.total}</h3>
+      <div className="admin-kpi">
+        <div className="kpi-card">
+          <b>{metrics.total}</b>
+          <span>Total</span>
         </div>
-
-        <div className="radar-card">
-          <b>Active Backlog</b>
-          <h3>{metrics.active}</h3>
+        <div className="kpi-card">
+          <b>{metrics.active}</b>
+          <span>Active</span>
         </div>
-
-        <div className="radar-card">
-          <b>High Priority</b>
-          <h3>{metrics.highPriority}</h3>
+        <div className="kpi-card danger">
+          <b>{metrics.highPriority}</b>
+          <span>High Priority</span>
         </div>
-
-        <div className="radar-card">
-          <b>Aging &gt; 24h</b>
-          <h3>{metrics.aging24}</h3>
+        <div className="kpi-card danger">
+          <b>{metrics.aging24}</b>
+          <span>Aging &gt;24h</span>
         </div>
-
+        <div className="kpi-card">
+          <b>{metrics.resolvedToday}</b>
+          <span>Resolved Today</span>
+        </div>
       </div>
 
-      {/* RADAR TIMELINE */}
-      <div className="timeline-box">
-        <h3 style={{ marginBottom: "10px" }}>Live Complaint Aging Radar</h3>
+      {/* RADAR PANEL */}
+      <div className="admin-panel">
+
+        <h3 className="panel-title">Live Complaint Aging Radar</h3>
 
         <div className="radar-timeline">
           {radarDots.map(c => (
@@ -160,6 +135,11 @@ function TechnicianRadar() {
             </div>
           ))}
         </div>
+
+        {radarDots.length === 0 && (
+          <p className="tech-empty">No complaints available</p>
+        )}
+
       </div>
 
     </div>
