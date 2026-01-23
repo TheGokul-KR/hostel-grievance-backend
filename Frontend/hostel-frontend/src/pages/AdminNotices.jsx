@@ -7,6 +7,8 @@ function AdminNotices() {
   const [list, setList] = useState([]);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState(null);
 
   const navigate = useNavigate();
   const role = localStorage.getItem("role")?.toLowerCase();
@@ -33,7 +35,13 @@ function AdminNotices() {
     load();
   }, []);
 
+  const showToast = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   const load = async () => {
+    setLoading(true);
     try {
       const res = await api.get("/notices");
       const data = Array.isArray(res.data) ? res.data : [];
@@ -49,6 +57,9 @@ function AdminNotices() {
       setList(data);
     } catch {
       setList([]);
+      showToast("error", "Failed to load notices");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -58,7 +69,7 @@ function AdminNotices() {
 
   const saveNotice = async () => {
     if (!form.title || !form.content) {
-      alert("Title and content required");
+      showToast("error", "Title and content are required");
       return;
     }
 
@@ -73,33 +84,37 @@ function AdminNotices() {
     try {
       if (form._id) {
         await api.patch(`/notices/${form._id}`, payload);
+        showToast("success", "Notice updated successfully");
       } else {
         await api.post("/notices", payload);
+        showToast("success", "Notice created successfully");
       }
 
       closeForm();
-      await load();
+      load();
     } catch (err) {
-      alert(err.response?.data?.message || "Save failed");
+      showToast("error", err.response?.data?.message || "Save failed");
     }
   };
 
   const remove = async id => {
-    if (!window.confirm("Delete this notice?")) return;
+    if (!window.confirm("Are you sure you want to delete this notice?")) return;
     try {
       await api.delete(`/notices/${id}`);
+      showToast("success", "Notice deleted");
       load();
     } catch {
-      alert("Delete failed");
+      showToast("error", "Delete failed");
     }
   };
 
   const togglePin = async n => {
     try {
       await api.patch(`/notices/${n._id}`, { pinned: !n.pinned });
+      showToast("success", n.pinned ? "Notice unpinned" : "Notice pinned");
       load();
     } catch {
-      alert("Pin update failed");
+      showToast("error", "Pin update failed");
     }
   };
 
@@ -112,9 +127,16 @@ function AdminNotices() {
   return (
     <div className="admin-bg notice-bg">
 
+      {/* 🔔 TOAST */}
+      {toast && (
+        <div className={`toast ${toast.type} slide-in`}>
+          {toast.message}
+        </div>
+      )}
+
       <div className="admin-top">
-        <h2>📢 Notice Board Management</h2>
-        <div>
+        <h2>📢 Notice Management</h2>
+        <div className="admin-top-actions">
           <button onClick={() => navigate("/admin")} className="admin-btn">
             ⬅ Dashboard
           </button>
@@ -126,69 +148,81 @@ function AdminNotices() {
 
       <input
         className="admin-search"
-        placeholder="Search notices..."
+        placeholder="Search notices by title or content..."
         value={search}
         onChange={e => setSearch(e.target.value)}
       />
 
       <div className="admin-content notice-grid">
 
-        {filtered.map(n => (
+        {loading && (
+          <div className="loading-box">Loading notices...</div>
+        )}
+
+        {!loading && filtered.map(n => (
           <div
             key={n._id}
-            className={`admin-card notice-card animated-card ${n.priority === "High" ? "danger" : ""}`}
+            className={`notice-card animated-card 
+              priority-${n.priority.toLowerCase()}
+              ${n.pinned ? "pinned" : ""}`}
           >
-            <div className="notice-head">
-              <b>{n.title}</b>
+            <div className="notice-header">
+              <h4>{n.title}</h4>
               {n.pinned && <span className="pin-badge">📌 Pinned</span>}
             </div>
 
-            <p className="notice-content">{n.content}</p>
+            <p className="notice-body">{n.content}</p>
 
-            <small>
-              Priority: {n.priority} | {new Date(n.createdAt).toLocaleString()}
-            </small>
+            <div className="notice-meta">
+              <span>Priority: {n.priority}</span>
+              <span>{new Date(n.createdAt).toLocaleString()}</span>
+            </div>
 
             {n.expiresAt && (
-              <p className="expiry">
+              <div className="expiry">
                 ⏳ Expires: {new Date(n.expiresAt).toLocaleDateString()}
-              </p>
+              </div>
             )}
 
             <div className="admin-action-box">
-              <button onClick={() => openEdit(n)}>Edit</button>
+              <button onClick={() => openEdit(n)}>✏ Edit</button>
               <button onClick={() => togglePin(n)}>
                 {n.pinned ? "Unpin" : "Pin"}
               </button>
               <button className="danger" onClick={() => remove(n._id)}>
-                Delete
+                🗑 Delete
               </button>
             </div>
           </div>
         ))}
 
-        {filtered.length === 0 && (
-          <p style={{ textAlign: "center", marginTop: 40 }}>
-            No notices found
-          </p>
+        {!loading && filtered.length === 0 && (
+          <div className="empty-state">
+            <p>No notices found</p>
+            <button className="admin-btn" onClick={openNew}>
+              Create first notice
+            </button>
+          </div>
         )}
       </div>
 
       {/* ================= MODAL ================= */}
       {form && (
-        <div className="modal-bg" onClick={closeForm}>
-          <div className="modal-box animated zoom-in" onClick={e => e.stopPropagation()}>
-
+        <div className="modal-bg fade-in" onClick={closeForm}>
+          <div
+            className="modal-box zoom-in"
+            onClick={e => e.stopPropagation()}
+          >
             <h3>{form._id ? "Edit Notice" : "Create Notice"}</h3>
 
             <input
-              placeholder="Title"
+              placeholder="Notice title"
               value={form.title}
               onChange={e => setForm({ ...form, title: e.target.value })}
             />
 
             <textarea
-              placeholder="Content"
+              placeholder="Notice content"
               value={form.content}
               onChange={e => setForm({ ...form, content: e.target.value })}
             />
@@ -218,10 +252,11 @@ function AdminNotices() {
             />
 
             <div className="admin-action-box">
-              <button className="primary" onClick={saveNotice}>Save</button>
+              <button className="primary" onClick={saveNotice}>
+                💾 Save
+              </button>
               <button onClick={closeForm}>Cancel</button>
             </div>
-
           </div>
         </div>
       )}
