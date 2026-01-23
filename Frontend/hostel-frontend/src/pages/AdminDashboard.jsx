@@ -6,7 +6,7 @@ import "../styles/admin.css";
 const IMAGE_BASE =
   import.meta.env.VITE_API_BASE_URL.replace(/\/api$/, "") + "/uploads/";
 
-const normalizeImage = (img) => {
+const normalizeImage = img => {
   if (!img) return "";
   if (img.startsWith("http")) return img;
   return IMAGE_BASE + encodeURIComponent(img);
@@ -15,26 +15,23 @@ const normalizeImage = (img) => {
 function AdminDashboard() {
   const [all, setAll] = useState([]);
   const [ragging, setRagging] = useState([]);
-
   const [page, setPage] = useState("NORMAL");
   const [selected, setSelected] = useState(null);
   const [previewImg, setPreviewImg] = useState(null);
-
   const [remark, setRemark] = useState("");
   const [search, setSearch] = useState("");
 
   const selectedIdRef = useRef(null);
-
   const navigate = useNavigate();
   const role = localStorage.getItem("role")?.toLowerCase();
 
+  /* ================= AUTH ================= */
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token || role !== "admin") {
-      navigate("/", { replace: true });
-    }
+    if (!token || role !== "admin") navigate("/", { replace: true });
   }, [navigate, role]);
 
+  /* ================= DATA ================= */
   const fetchData = async () => {
     try {
       const [a, r] = await Promise.all([
@@ -52,9 +49,7 @@ function AdminDashboard() {
         const found =
           allList.find(c => c._id === selectedIdRef.current) ||
           ragList.find(c => c._id === selectedIdRef.current);
-
-        if (found) setSelected(found);
-        else setSelected(null);
+        setSelected(found || null);
       }
     } catch {
       setAll([]);
@@ -64,14 +59,15 @@ function AdminDashboard() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
+    const i = setInterval(fetchData, 5000);
+    return () => clearInterval(i);
   }, []);
 
   useEffect(() => {
     if (selected) setRemark(selected.adminRemark || "");
   }, [selected]);
 
+  /* ================= ACTIONS ================= */
   const logout = () => {
     localStorage.clear();
     navigate("/");
@@ -91,14 +87,6 @@ function AdminDashboard() {
     );
   }, [all, search]);
 
-  const reloadSelected = async id => {
-    const res = await api.get("/complaints/admin/all");
-    const list = Array.isArray(res.data) ? res.data : [];
-    setAll(list);
-    const updated = list.find(c => c._id === id);
-    if (updated) setSelected(updated);
-  };
-
   const markReviewed = async id => {
     await api.patch(`/complaints/admin/ragging/${id}/review`);
     fetchData();
@@ -110,9 +98,10 @@ function AdminDashboard() {
     await api.patch(`/complaints/admin/ragging/${selected._id}/remark`, {
       remark
     });
-    await reloadSelected(selected._id);
+    fetchData();
   };
 
+  /* ================= METRICS ================= */
   const completedCount = all.filter(c => c.status === "Completed").length;
   const pendingCount = all.filter(c => c.status !== "Completed").length;
 
@@ -122,181 +111,157 @@ function AdminDashboard() {
       : Math.round(
           all
             .filter(c => c.status === "Completed")
-            .reduce((a, b) => a + (b.resolutionHours || 24), 0) / completedCount
+            .reduce((a, b) => a + (b.resolutionHours || 24), 0) /
+            completedCount
         ) + "h";
 
   const criticalMode = ragging.length > 0 || overdue.length > 0;
 
-  const getStageClass = stage =>
-    selected?.status === stage ? "journey-step active" : "journey-step";
-
   return (
-    <div className={`admin-shell ${criticalMode ? "critical" : ""}`}>
+    <div className={`admin-dashboard ${criticalMode ? "critical" : ""}`}>
 
-      {/* ===== TOP BAR ===== */}
-      <div className="admin-topbar">
-        <div className="admin-title">Hostel Administration Panel</div>
-        <button className="admin-btn logout" onClick={logout}>Logout</button>
-      </div>
+      {/* ================= HEADER ================= */}
+      <header className="admin-header">
+        <h1>Admin Control Center</h1>
+        <button className="logout-btn" onClick={logout}>Logout</button>
+      </header>
 
-      {/* ===== KPI BAR ===== */}
-      <div className="admin-kpi">
-        <div className="kpi-card"><b>{pendingCount}</b><span>Active</span></div>
-        <div className="kpi-card"><b>{completedCount}</b><span>Completed</span></div>
-        <div className="kpi-card"><b>{avgResolution}</b><span>Avg Time</span></div>
-        <div className="kpi-card danger"><b>{ragging.length}</b><span>Ragging</span></div>
-        <div className="kpi-card danger"><b>{overdue.length}</b><span>Overdue</span></div>
-      </div>
+      {/* ================= KPIs ================= */}
+      <section className="dashboard-kpis">
+        <div className="kpi active"><b>{pendingCount}</b><span>Active</span></div>
+        <div className="kpi success"><b>{completedCount}</b><span>Completed</span></div>
+        <div className="kpi info"><b>{avgResolution}</b><span>Avg Time</span></div>
+        <div className="kpi danger"><b>{ragging.length}</b><span>Ragging</span></div>
+        <div className="kpi danger"><b>{overdue.length}</b><span>Overdue</span></div>
+      </section>
 
-      {criticalMode && (
-        <div className="admin-alert">
-          ⚠ Critical operational risk detected. Immediate action required.
-        </div>
-      )}
+      {/* ================= TABS ================= */}
+      <nav className="dashboard-tabs">
+        <button onClick={() => { setPage("NORMAL"); setSelected(null); }}>Complaints</button>
+        <button onClick={() => { setPage("RAGGING"); setSelected(null); }}>Ragging</button>
+        <button onClick={() => { setPage("OVERDUE"); setSelected(null); }}>Overdue</button>
 
-      <div className="admin-main">
+        <span className="spacer" />
 
-        {/* ===== SIDE NAV ===== */}
-        <div className="admin-nav">
-          <button onClick={() => { setPage("NORMAL"); setSelected(null); }}>Complaints</button>
-          <button onClick={() => { setPage("RAGGING"); setSelected(null); }}>Ragging</button>
-          <button onClick={() => { setPage("OVERDUE"); setSelected(null); }}>Overdue</button>
+        <button onClick={() => navigate("/admin/students")}>Students</button>
+        <button onClick={() => navigate("/admin/technicians")}>Technicians</button>
+        <button onClick={() => navigate("/admin/notices")}>Notices</button>
+      </nav>
 
-          <hr/>
+      {/* ================= MAIN ================= */}
+      <main className="dashboard-main">
 
-          <button onClick={() => navigate("/admin/students")}>Students</button>
-          <button onClick={() => navigate("/admin/technicians")}>Technicians</button>
-          <button onClick={() => navigate("/admin/notices")}>Notices</button>
-        </div>
+        {/* ===== LIST ===== */}
+        <section className="dashboard-list">
 
-        {/* ===== CONTENT ===== */}
-        <div className="admin-panel">
+          {page === "NORMAL" && (
+            <>
+              <input
+                className="search-input"
+                placeholder="Search complaints..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
 
-{/* ================= NORMAL ================= */}
-{page === "NORMAL" && (
-<>
-<h3 className="panel-title">All Complaints</h3>
+              {filteredAll.map(c => (
+                <div
+                  key={c._id}
+                  className="list-item"
+                  onClick={() => {
+                    selectedIdRef.current = c._id;
+                    setSelected(c);
+                  }}
+                >
+                  <div className="list-top">
+                    <span>{c.category}</span>
+                    <span>{c.status}</span>
+                  </div>
+                  <p>{(c.complaintText || "").slice(0, 100)}...</p>
+                </div>
+              ))}
+            </>
+          )}
 
-<input
-  className="admin-search"
-  placeholder="Search complaints..."
-  value={search}
-  onChange={e => setSearch(e.target.value)}
-/>
+          {page === "RAGGING" &&
+            ragging.map(c => (
+              <div
+                key={c._id}
+                className="list-item danger"
+                onClick={() => setSelected(c)}
+              >
+                <p>{(c.complaintText || "").slice(0, 100)}...</p>
+                <small>{c.adminReviewed ? "Reviewed" : "Pending"}</small>
+              </div>
+            ))}
 
-{!selected && filteredAll.map(c => (
-<div key={c._id} className="list-card" onClick={() => {
-  selectedIdRef.current = c._id;
-  setSelected(c);
-}}>
-<div className="list-head">
-  <span>{c.category}</span>
-  <span className="status">{c.status}</span>
-</div>
-<p>{(c.complaintText || "").slice(0,120)}...</p>
-</div>
-))}
+          {page === "OVERDUE" &&
+            overdue.map(c => (
+              <div
+                key={c._id}
+                className="list-item danger"
+                onClick={() => {
+                  setSelected(c);
+                  setPage("NORMAL");
+                }}
+              >
+                <b>{c.category}</b> — {c.status}
+              </div>
+            ))}
+        </section>
 
-{selected && (
-<div className="detail-panel">
+        {/* ===== DETAILS ===== */}
+        <section className="dashboard-detail">
+          {!selected && <p className="empty">Select an item to view details</p>}
 
-<button className="back-btn" onClick={() => setSelected(null)}>Back</button>
+          {selected && (
+            <>
+              <button className="back-btn" onClick={() => setSelected(null)}>
+                ← Back
+              </button>
 
-<div className="journey-bar">
-  <div className={getStageClass("Pending")}>Submitted</div>
-  <div className={getStageClass("In Progress")}>In Progress</div>
-  <div className={getStageClass("Resolved")}>Resolved</div>
-  <div className={getStageClass("Completed")}>Completed</div>
-</div>
+              <h3>{selected.category}</h3>
+              <p>{selected.complaintText}</p>
 
-<div className="detail-grid">
-  <div><b>Status</b><span>{selected.status}</span></div>
-  <div><b>Room</b><span>{selected.roomNumber}</span></div>
-  <div><b>Category</b><span>{selected.category}</span></div>
-  <div><b>Technician</b><span>{selected.technicianNameSnapshot || "Auto"}</span></div>
-</div>
+              {Array.isArray(selected.images) && (
+                <div className="image-grid">
+                  {selected.images.map((img, i) => (
+                    <img
+                      key={i}
+                      src={normalizeImage(img)}
+                      alt=""
+                      onClick={() => setPreviewImg(normalizeImage(img))}
+                    />
+                  ))}
+                </div>
+              )}
 
-<div className="detail-text">{selected.complaintText || ""}</div>
-
-{Array.isArray(selected.images) && (
-<div className="image-grid">
-{selected.images.map((img,i)=>(
-<img key={i} src={normalizeImage(img)} alt="" onClick={()=>setPreviewImg(normalizeImage(img))}/>
-))}
-</div>
-)}
-
-</div>
-)}
-</>
-)}
-
-{/* ================= RAGGING ================= */}
-{page === "RAGGING" && (
-<>
-<h3 className="panel-title">Ragging Complaints</h3>
-
-{!selected && ragging.map(c=>(
-<div key={c._id} className="list-card danger" onClick={()=>setSelected(c)}>
-<p>{(c.complaintText || "").slice(0,120)}...</p>
-<span>{c.adminReviewed ? "Reviewed" : "Pending"}</span>
-</div>
-))}
-
-{selected && (
-<div className="detail-panel">
-
-<button className="back-btn" onClick={()=>setSelected(null)}>Back</button>
-
-<div className="detail-text">{selected.complaintText || ""}</div>
-
-<textarea
-className="admin-remark"
-placeholder="Admin remark..."
-value={remark}
-onChange={e=>setRemark(e.target.value)}
-/>
-
-<div className="action-row">
-{!selected.adminReviewed && (
-<button className="admin-btn danger" onClick={()=>markReviewed(selected._id)}>
-Mark Reviewed
-</button>
-)}
-<button className="admin-btn" onClick={saveRemark}>
-Save Remark
-</button>
-</div>
-
-</div>
-)}
-</>
-)}
-
-{/* ================= OVERDUE ================= */}
-{page === "OVERDUE" && (
-<>
-<h3 className="panel-title">Overdue Complaints</h3>
-
-{overdue.map(c=>(
-<div key={c._id} className="list-card danger" onClick={()=>{setSelected(c);setPage("NORMAL")}}>
-<b>{c.category}</b> — {c.status}
-</div>
-))}
-
-{overdue.length === 0 && <p>No overdue complaints</p>}
-</>
-)}
-
-        </div>
-      </div>
+              {page === "RAGGING" && (
+                <>
+                  <textarea
+                    value={remark}
+                    placeholder="Admin remark..."
+                    onChange={e => setRemark(e.target.value)}
+                  />
+                  <div className="action-row">
+                    {!selected.adminReviewed && (
+                      <button onClick={() => markReviewed(selected._id)}>
+                        Mark Reviewed
+                      </button>
+                    )}
+                    <button onClick={saveRemark}>Save Remark</button>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </section>
+      </main>
 
       {previewImg && (
-        <div className="image-modal" onClick={()=>setPreviewImg(null)}>
-          <img src={previewImg} alt="preview"/>
+        <div className="image-modal" onClick={() => setPreviewImg(null)}>
+          <img src={previewImg} alt="preview" />
         </div>
       )}
-
     </div>
   );
 }
