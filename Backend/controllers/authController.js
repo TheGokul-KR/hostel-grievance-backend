@@ -247,9 +247,22 @@ exports.verifyTechnicianSignupOTP = async (req, res) => {
 // =======================================================
 exports.login = async (req, res) => {
   try {
-    const { identifier, password } = req.body;
+    
+const rawIdentifier =
+  req.body.identifier ||
+  req.body.email ||
+  req.body.regNo ||
+  req.body.techId;
 
-    const clean = identifier.trim();
+const { password } = req.body;
+
+if (!rawIdentifier || !password) {
+  return res
+    .status(400)
+    .json({ message: "Identifier and password required" });
+}
+
+const clean = rawIdentifier.trim();
 
     const user = await User.findOne({
       $and: [
