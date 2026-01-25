@@ -15,11 +15,13 @@ function NotificationBell() {
       const list = Array.isArray(res.data) ? res.data : [];
 
       // Treat active complaints as notifications
-      const active = list.filter(c =>
-        ["Pending", "In Progress"].includes(c.status)
-      );
+     // show latest complaints as notifications (latest first)
+const sorted = list
+  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+  .slice(0, 10);
 
-      setItems(active);
+setItems(sorted);
+
     } catch (err) {
       console.error("Bell fetch failed", err);
     }

@@ -1,7 +1,21 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
+:root {
+  --bg-main: #f8fafc;
+  --bg-panel: #ffffff;
+  --border: #e5e7eb;
 
+  --teal: #14b8a6;
+  --teal-dark: #0f766e;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  --pending: #f59e0b;
+  --progress: #0ea5e9;
+  --resolved: #22c55e;
+  --completed: #8b5cf6;
+
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+}
 
 * {
   box-sizing: border-box;
@@ -9,68 +23,37 @@
 
 body {
   margin: 0;
-  background: #05070f;
+  background: var(--bg-main);
+  font-family: Inter, system-ui, sans-serif;
+  color: var(--text-main);
 }
 
-/* ================= ROOT ================= */
+/* ===== ROOT ===== */
 .tech-shell {
   min-height: 100vh;
-  font-family: "Inter", system-ui, sans-serif;
-  color: #e5e7eb;
-  padding: 16px;
-  background:
-    radial-gradient(800px 400px at 10% -10%, #1e293b40, transparent),
-    radial-gradient(600px 300px at 90% 10%, #6366f140, transparent),
-    linear-gradient(180deg, #020617, #020617 60%, #030712);
+  padding: 20px;
 }
 
-/* ================= TOAST ================= */
-.tech-toast {
-  position: fixed;
-  top: 18px;
-  right: 18px;
-  background: linear-gradient(135deg, #020617, #020617cc);
-  border: 1px solid #6366f1;
-  padding: 12px 18px;
-  border-radius: 14px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #c7d2fe;
-  z-index: 9999;
-  animation: toastPop .4s cubic-bezier(.2,.8,.2,1);
-}
-
-@keyframes toastPop {
-  from { opacity: 0; transform: translateY(-12px) scale(.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-/* ================= TOP BAR ================= */
+/* ===== TOP BAR ===== */
 .tech-topbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(135deg, #020617, #020617cc);
-  border: 1px solid #1e293b;
-  border-radius: 18px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
   padding: 14px 18px;
-  margin-bottom: 16px;
-  backdrop-filter: blur(10px);
+  margin-bottom: 18px;
 }
 
 .tech-title {
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: .3px;
-  color: #e0e7ff;
+  font-size: 18px;
+  font-weight: 700;
 }
 
 .dept-badge {
-  margin-top: 2px;
   font-size: 11px;
-  font-weight: 700;
-  color: #22c55e;
-  text-transform: uppercase;
+  color: var(--teal-dark);
 }
 
 .tech-actions {
@@ -81,54 +64,51 @@ body {
 
 .tech-user {
   font-size: 13px;
-  font-weight: 600;
-  color: #c7d2fe;
+  color: var(--text-muted);
 }
 
-/* ================= BUTTONS ================= */
+/* ===== BUTTONS ===== */
 .tech-btn {
-  background: linear-gradient(135deg, #020617, #020617cc);
-  border: 1px solid #334155;
-  color: #e5e7eb;
-  padding: 9px 16px;
-  border-radius: 14px;
-  font-size: 12px;
-  font-weight: 600;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
   cursor: pointer;
-  transition: all .25s ease;
+  transition: 0.2s;
 }
 
 .tech-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(0,0,0,.4);
-  background: #1e293b;
+  background: #f1f5f9;
 }
 
 .tech-btn.primary {
-  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  background: var(--teal);
+  color: white;
   border: none;
 }
 
 .tech-btn.primary:hover {
-  box-shadow: 0 0 0 4px rgba(99,102,241,.25);
+  background: var(--teal-dark);
 }
 
 .tech-btn.danger {
-  background: linear-gradient(135deg, #7f1d1d, #991b1b);
+  background: #ef4444;
+  color: white;
   border: none;
 }
 
-/* ================= LAYOUT ================= */
+/* ===== LAYOUT ===== */
 .tech-main {
   display: grid;
-  grid-template-columns: 1fr 1.4fr;
-  gap: 16px;
+  grid-template-columns: 360px 1fr;
+  gap: 20px;
 }
 
-/* ================= FILTER ================= */
+/* ===== FILTER ===== */
 .tech-filter-bar {
   display: grid;
-  grid-template-columns: 1fr .8fr;
+  grid-template-columns: 1fr 0.7fr;
   gap: 10px;
   margin-bottom: 12px;
 }
@@ -136,210 +116,138 @@ body {
 .tech-search,
 .tech-filter,
 .tech-input {
-  background: rgba(2,6,23,.9);
-  border: 1px solid #1e293b;
-  border-radius: 14px;
-  padding: 12px;
-  color: #e5e7eb;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
   font-size: 13px;
 }
 
-/* ================= LIST ================= */
+/* ===== LIST ===== */
 .tech-list {
   max-height: 75vh;
   overflow-y: auto;
-  padding-right: 4px;
 }
 
 .tech-list-card {
-  background: linear-gradient(135deg, #020617, #020617cc);
-  border: 1px solid #1e293b;
-  border-radius: 18px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
   padding: 14px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   cursor: pointer;
-  transition: all .25s ease;
+  transition: 0.2s;
 }
 
 .tech-list-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(0,0,0,.5);
+  border-color: var(--teal);
 }
 
 .tech-list-card.active {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 2px rgba(99,102,241,.3);
+  border-left: 5px solid var(--teal);
+  background: #f0fdfa;
 }
 
-/* ================= STATUS CARD COLORS ================= */
-.tech-list-card.Pending { border-left: 5px solid #facc15; }
-.tech-list-card.InProgress { border-left: 5px solid #38bdf8; }
-.tech-list-card.Resolved { border-left: 5px solid #22c55e; }
-.tech-list-card.Completed { border-left: 5px solid #a78bfa; }
+/* ===== STATUS STRIP ===== */
+.tech-list-card.Pending { border-left: 5px solid var(--pending); }
+.tech-list-card.InProgress { border-left: 5px solid var(--progress); }
+.tech-list-card.Resolved { border-left: 5px solid var(--resolved); }
+.tech-list-card.Completed { border-left: 5px solid var(--completed); }
 
-.list-head {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-  margin-bottom: 6px;
-}
-
-.list-text {
-  font-size: 14px;
-  font-weight: 500;
-}
-
-/* ================= STATUS BADGE ================= */
+/* ===== STATUS BADGE ===== */
 .status-badge {
-  padding: 4px 12px;
+  padding: 4px 10px;
   border-radius: 999px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
-.status-badge.Pending { background:#facc1525; color:#facc15 }
-.status-badge.InProgress { background:#38bdf825; color:#38bdf8 }
-.status-badge.Resolved {
-  background:#22c55e25;
-  color:#22c55e;
-  animation: resolvedPulse 1.5s infinite;
-}
-.status-badge.Completed { background:#a78bfa25; color:#a78bfa }
+.status-badge.Pending { background:#fff7ed; color:#b45309; }
+.status-badge.InProgress { background:#eff6ff; color:#0369a1; }
+.status-badge.Resolved { background:#ecfdf5; color:#047857; }
+.status-badge.Completed { background:#f5f3ff; color:#6d28d9; }
 
-@keyframes resolvedPulse {
-  0% { box-shadow: 0 0 0 0 rgba(34,197,94,.5); }
-  70% { box-shadow: 0 0 0 14px rgba(34,197,94,0); }
-  100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
-}
-
-/* ================= DETAIL ================= */
+/* ===== DETAIL ===== */
 .tech-detail {
-  background: linear-gradient(135deg, #020617, #020617cc);
-  border: 1px solid #1e293b;
-  border-radius: 20px;
-  padding: 18px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
   max-height: 75vh;
   overflow-y: auto;
 }
 
 .detail-title {
-  font-size: 16px;
-  font-weight: 800;
-  margin-bottom: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 14px;
 }
 
-.detail-box {
-  background: rgba(2,6,23,.9);
-  border: 1px solid #1e293b;
-  border-radius: 14px;
-  padding: 14px;
-  font-size: 14px;
-}
-
-/* ================= TIMELINE ================= */
+/* ===== TIMELINE ===== */
 .tech-timeline {
-  margin: 16px 0;
-  padding-left: 10px;
-  border-left: 3px solid #1e293b;
+  border-left: 2px solid var(--border);
+  padding-left: 14px;
+  margin-bottom: 18px;
 }
 
 .timeline-item {
   display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
-  animation: fadeUp .4s ease;
+  gap: 10px;
+  margin-bottom: 14px;
 }
 
 .timeline-dot {
-  width: 12px;
-  height: 12px;
-  margin-top: 6px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
+  margin-top: 6px;
 }
 
-.timeline-item.Pending .timeline-dot { background:#facc15 }
-.timeline-item.InProgress .timeline-dot { background:#38bdf8 }
-.timeline-item.Resolved .timeline-dot { background:#22c55e }
-.timeline-item.Completed .timeline-dot { background:#a78bfa }
-
-.timeline-content b {
-  font-size: 14px;
-}
+.timeline-item.Pending .timeline-dot { background: var(--pending); }
+.timeline-item.InProgress .timeline-dot { background: var(--progress); }
+.timeline-item.Resolved .timeline-dot { background: var(--resolved); }
+.timeline-item.Completed .timeline-dot { background: var(--completed); }
 
 .timeline-content small {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 
-/* ================= EVIDENCE ================= */
+/* ===== EVIDENCE ===== */
 .repair-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill,minmax(100px,1fr));
+  grid-template-columns: repeat(auto-fill, minmax(110px,1fr));
   gap: 10px;
 }
 
 .repair-grid img {
+  height: 110px;
   width: 100%;
-  height: 100px;
   object-fit: cover;
-  border-radius: 14px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: .25s;
+  border: 1px solid var(--border);
 }
 
-.repair-grid img:hover {
-  transform: scale(1.06);
-}
-
-/* ================= OPTIONAL INPUT ================= */
-.tech-input.optional {
-  border: 2px dashed #6366f1;
-  background: rgba(99,102,241,.08);
-}
-
-.optional-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #a5b4fc;
-}
-
-/* ================= IMAGE MODAL ================= */
+/* ===== MODAL ===== */
 .image-modal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.8);
+  background: rgba(0,0,0,0.7);
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   z-index: 1000;
-  animation: fadeUp .3s ease;
 }
 
 .image-modal img {
-  max-width: 92%;
-  max-height: 92%;
-  border-radius: 16px;
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 12px;
 }
 
-/* ================= ANIMATIONS ================= */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ================= MOBILE ================= */
-@media(max-width: 900px) {
+/* ===== MOBILE ===== */
+@media (max-width: 900px) {
   .tech-main {
     grid-template-columns: 1fr;
-  }
-
-  .tech-topbar {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .tech-actions {
-    width: 100%;
-    justify-content: space-between;
   }
 }
