@@ -4,74 +4,88 @@ import "./notification.css";
 
 function NotificationBell() {
   const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] = useState([]);
+  const [items, setItems] = useState([]);
+  const [seenIds, setSeenIds] = useState(() => {
+    return JSON.parse(localStorage.getItem("seen_notifications") || "[]");
+  });
 
-  const fetchNotifications = async () => {
+  const fetchComplaintsAsNotifications = async () => {
     try {
-      const res = await api.get("/notifications");
-      setNotifications(res.data || []);
-    } catch {
-      console.error("Notification load failed");
+      const res = await api.get("/complaints/technician");
+      const list = Array.isArray(res.data) ? res.data : [];
+
+      // Treat active complaints as notifications
+      const active = list.filter(c =>
+        ["Pending", "In Progress"].includes(c.status)
+      );
+
+      setItems(active);
+    } catch (err) {
+      console.error("Bell fetch failed", err);
     }
   };
 
   useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 15000);
-    return () => clearInterval(interval);
+    fetchComplaintsAsNotifications();
+    const i = setInterval(fetchComplaintsAsNotifications, 15000);
+    return () => clearInterval(i);
   }, []);
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unread = items.filter(c => !seenIds.includes(c._id));
 
-  const markRead = async (id) => {
-    try {
-      await api.patch(`/notifications/${id}/read`);
-      fetchNotifications();
-    } catch {
-      console.error("Mark read failed");
-    }
+  const markSeen = id => {
+    const updated = [...new Set([...seenIds, id])];
+    setSeenIds(updated);
+    localStorage.setItem("seen_notifications", JSON.stringify(updated));
   };
 
   return (
     <div className="notif-wrapper">
-
-      <div className="notif-bell" onClick={() => setOpen(!open)}>
+      <div
+        className="notif-bell"
+        onClick={() => setOpen(o => !o)}
+      >
         <span className="bell-icon">🔔</span>
-        {unreadCount > 0 && (
-          <span className="notif-badge">{unreadCount}</span>
+        {unread.length > 0 && (
+          <span className="notif-badge">{unread.length}</span>
         )}
       </div>
 
       {open && (
         <div className="notif-panel">
-
           <div className="notif-header">
-            <h4>Notifications</h4>
-            <span className="notif-count">{unreadCount} unread</span>
+            <h4>Active Complaints</h4>
+            <span className="notif-count">
+              {unread.length} new
+            </span>
           </div>
 
           <div className="notif-list">
-            {notifications.length === 0 && (
-              <p className="notif-empty">No notifications</p>
+            {items.length === 0 && (
+              <p className="notif-empty">No active complaints</p>
             )}
 
-            {notifications.map(n => (
-              <div
-                key={n._id}
-                className={`notif-item ${n.isRead ? "read" : "unread"}`}
-                onClick={() => markRead(n._id)}
-              >
-                <div className="notif-message">{n.message}</div>
-                <small className="notif-time">
-                  {new Date(n.createdAt).toLocaleString()}
-                </small>
-              </div>
-            ))}
-          </div>
+            {items.map(c => {
+              const isUnread = !seenIds.includes(c._id);
 
+              return (
+                <div
+                  key={c._id}
+                  className={`notif-item ${isUnread ? "unread" : "read"}`}
+                  onClick={() => markSeen(c._id)}
+                >
+                  <div className="notif-message">
+                    <b>Room {c.roomNumber}</b> — {c.status}
+                  </div>
+                  <small className="notif-time">
+                    {new Date(c.createdAt).toLocaleString()}
+                  </small>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
-
     </div>
   );
 }
