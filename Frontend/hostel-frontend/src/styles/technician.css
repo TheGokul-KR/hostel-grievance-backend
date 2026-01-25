@@ -11,7 +11,7 @@ body {
 /* ================= ROOT ================= */
 .tech-shell {
   min-height: 100vh;
-  background: linear-gradient(180deg, #020617, #0b1025);
+  background: radial-gradient(1200px 400px at top, #020617, #020617 40%, #0b1025);
   font-family: "Inter", system-ui, sans-serif;
   color: #e5e7eb;
   padding: 14px;
@@ -29,6 +29,12 @@ body {
   font-size: 13px;
   color: #38bdf8;
   z-index: 9999;
+  animation: toastSlide .35s ease;
+}
+
+@keyframes toastSlide {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ================= TOP BAR ================= */
@@ -70,11 +76,11 @@ body {
   background: #020617;
   border: 1px solid #334155;
   color: #e5e7eb;
-  padding: 6px 12px;
+  padding: 8px 14px;
   border-radius: 10px;
   font-size: 12px;
   cursor: pointer;
-  transition: .2s;
+  transition: .2s ease;
 }
 
 .tech-btn:hover {
@@ -134,11 +140,11 @@ body {
 .tech-list-card {
   background: #020617;
   border: 1px solid #334155;
-  border-radius: 12px;
-  padding: 10px;
+  border-radius: 14px;
+  padding: 12px;
   margin-bottom: 8px;
   cursor: pointer;
-  transition: .2s;
+  transition: .2s ease;
 }
 
 .tech-list-card:hover {
@@ -147,10 +153,30 @@ body {
 
 .tech-list-card.active {
   border-color: #6366f1;
+  box-shadow: 0 0 0 1px rgba(99,102,241,.4);
 }
 
 .tech-list-card.high {
   border-left: 4px solid #ef4444;
+}
+
+/* ================= STATUS BADGES ================= */
+.status {
+  font-weight: 600;
+}
+
+.status.Pending { color: #facc15; }
+.status.InProgress { color: #38bdf8; }
+.status.Resolved {
+  color: #22c55e;
+  animation: pulse 1.6s infinite;
+}
+.status.Completed { color: #94a3b8; }
+
+@keyframes pulse {
+  0% { opacity: .6; }
+  50% { opacity: 1; }
+  100% { opacity: .6; }
 }
 
 .list-head {
@@ -158,10 +184,6 @@ body {
   justify-content: space-between;
   font-size: 11px;
   margin-bottom: 6px;
-}
-
-.status {
-  font-weight: 600;
 }
 
 .list-text {
@@ -244,6 +266,11 @@ body {
   object-fit: cover;
   border-radius: 10px;
   cursor: pointer;
+  transition: .2s;
+}
+
+.repair-grid img:hover {
+  transform: scale(1.03);
 }
 
 /* ================= INPUT ================= */
