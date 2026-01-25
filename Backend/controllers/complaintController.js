@@ -34,9 +34,10 @@ exports.createComplaint = async (req, res) => {
       return res.status(400).json({ message: "Complaint text and category required" });
 
     const images =
-      Array.isArray(req.files) && req.files.length > 0
-        ? req.files.map(f => f.filename)
-        : [];
+  Array.isArray(req.files) && req.files.length > 0
+    ? req.files.map(f => f.path)
+    : [];
+
 
     const finalRoom = isRagging ? (roomNumber?.trim() || null) : req.user.roomNumber;
 
@@ -64,7 +65,6 @@ exports.createComplaint = async (req, res) => {
     });
 
     return res.status(201).json(complaint);
-
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
@@ -103,7 +103,6 @@ exports.getTechnicianComplaints = async (req, res) => {
     }).sort({ createdAt: -1 });
 
     return res.json(complaints);
-
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
@@ -134,7 +133,8 @@ exports.uploadRepairImage = async (req, res) => {
   if (!Array.isArray(req.files) || req.files.length === 0)
     return res.status(400).json({ message: "No images uploaded" });
 
-  const imgs = req.files.map(f => f.filename);
+  const imgs = req.files.map(f => f.path);
+
 
   complaint.repairImages.push(...imgs);
   complaint.repairUploadedAt = new Date();
@@ -200,7 +200,6 @@ exports.updateComplaintStatus = async (req, res) => {
 
     await complaint.save();
     return res.json(complaint);
-
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
@@ -272,7 +271,6 @@ exports.rejectComplaint = async (req, res) => {
 
 exports.rateComplaint = async (req, res) => {
   const { rating, feedback, ratingFeedback } = req.body;
-
   const finalFeedback = feedback || ratingFeedback || "";
 
   if (!rating || rating < 1 || rating > 5)
@@ -290,13 +288,13 @@ exports.rateComplaint = async (req, res) => {
   complaint.rating = rating;
   complaint.ratingFeedback = finalFeedback;
   complaint.ratedAt = new Date();
-  
-complaint.statusHistory.push({
-  status: "Rated",
-  changedByRole: "Student",
-  changedById: req.user.userId,
-  remark: `Rating: ${rating}`
-});
+
+  complaint.statusHistory.push({
+    status: "Rated",
+    changedByRole: "Student",
+    changedById: req.user.userId,
+    remark: `Rating: ${rating}`
+  });
 
   await complaint.save();
   return res.json(complaint);
@@ -365,6 +363,13 @@ exports.saveAdminRemark = async (req, res) => {
   if (!complaint) return res.status(404).json({ message: "Not found" });
 
   complaint.adminRemark = remark || "";
+
+  complaint.statusHistory.push({
+    status: "Admin Remark",
+    changedByRole: "Admin",
+    changedById: req.user.userId,
+    remark: remark || ""
+  });
 
   await complaint.save();
   return res.json(complaint);

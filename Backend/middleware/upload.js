@@ -1,49 +1,29 @@
 const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinary = require("cloudinary").v2;
 
-// ================= UPLOAD ROOT =================
-const uploadDir = path.join(__dirname, "../uploads");
-
-// ensure folder exists
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// ================= ALLOWED EXTENSIONS =================
-const allowedExt = [".jpg", ".jpeg", ".png", ".webp"];
+// ================= CLOUDINARY CONFIG =================
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 // ================= STORAGE CONFIG =================
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-
-    const uniqueName =
-      Date.now() +
-      "-" +
-      Math.round(Math.random() * 1e9) +
-      ext;
-
-    cb(null, uniqueName);
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "hostel-complaints",
+    allowed_formats: ["jpg", "jpeg", "png", "webp"],
+    transformation: [{ quality: "auto" }]
   }
 });
 
 // ================= FILTER =================
 const fileFilter = (req, file, cb) => {
-  const ext = path.extname(file.originalname).toLowerCase();
-
   if (!file.mimetype.startsWith("image/")) {
     return cb(new Error("Only image files are allowed"), false);
   }
-
-  if (!allowedExt.includes(ext)) {
-    return cb(new Error("Invalid image format"), false);
-  }
-
   cb(null, true);
 };
 
