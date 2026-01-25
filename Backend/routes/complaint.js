@@ -135,4 +135,11 @@ router.patch(
   controller.saveAdminRemark
 );
 
+router.patch(
+  "/:id/hide",
+  auth(["Student"]),
+  controller.hideCompletedComplaint
+);
+
+
 module.exports = router;

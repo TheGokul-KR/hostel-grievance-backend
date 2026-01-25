@@ -34,10 +34,9 @@ exports.createComplaint = async (req, res) => {
       return res.status(400).json({ message: "Complaint text and category required" });
 
     const images =
-  Array.isArray(req.files) && req.files.length > 0
-    ? req.files.map(f => f.path)
-    : [];
-
+      Array.isArray(req.files) && req.files.length > 0
+        ? req.files.map(f => f.path)
+        : [];
 
     const finalRoom = isRagging ? (roomNumber?.trim() || null) : req.user.roomNumber;
 
@@ -70,13 +69,39 @@ exports.createComplaint = async (req, res) => {
   }
 };
 
+// ✅ UPDATED: hide student-hidden complaints
 exports.getMyComplaints = async (req, res) => {
   const complaints = await Complaint.find({
     userId: req.user.userId,
-    isDeleted: false
+    isDeleted: false,
+    studentHidden: false // ✅ NEW
   }).sort({ createdAt: -1 });
 
   return res.json(complaints);
+};
+
+// ✅ NEW: Student hide completed complaint (mobile-friendly)
+exports.hideCompletedComplaint = async (req, res) => {
+  const complaint = await Complaint.findById(req.params.id);
+  if (!complaint) return res.status(404).json({ message: "Not found" });
+
+  if (String(complaint.userId) !== String(req.user.userId))
+    return res.status(403).json({ message: "Unauthorized" });
+
+  if (complaint.status !== "Completed")
+    return res.status(400).json({ message: "Only completed complaints can be hidden" });
+
+  complaint.studentHidden = true;
+
+  complaint.statusHistory.push({
+    status: "Hidden",
+    changedByRole: "Student",
+    changedById: req.user.userId,
+    remark: "Student hid completed complaint"
+  });
+
+  await complaint.save();
+  return res.json({ success: true });
 };
 
 // ---------------- TECHNICIAN ----------------
@@ -135,7 +160,6 @@ exports.uploadRepairImage = async (req, res) => {
 
   const imgs = req.files.map(f => f.path);
 
-
   complaint.repairImages.push(...imgs);
   complaint.repairUploadedAt = new Date();
 
@@ -144,6 +168,7 @@ exports.uploadRepairImage = async (req, res) => {
 };
 
 // ---------------- UPDATE STATUS ----------------
+// (UNCHANGED — leaving exactly as is)
 
 exports.updateComplaintStatus = async (req, res) => {
   try {
@@ -204,6 +229,11 @@ exports.updateComplaintStatus = async (req, res) => {
     return res.status(500).json({ message: err.message });
   }
 };
+
+// ---------------- CONFIRM / REJECT / RATE / DELETE / ADMIN ----------------
+// ALL REMAIN EXACTLY THE SAME AS YOUR VERSION (no trimming)
+
+
 
 // ---------------- CONFIRM ----------------
 
