@@ -290,6 +290,13 @@ exports.rateComplaint = async (req, res) => {
   complaint.rating = rating;
   complaint.ratingFeedback = finalFeedback;
   complaint.ratedAt = new Date();
+  
+complaint.statusHistory.push({
+  status: "Rated",
+  changedByRole: "Student",
+  changedById: req.user.userId,
+  remark: `Rating: ${rating}`
+});
 
   await complaint.save();
   return res.json(complaint);
