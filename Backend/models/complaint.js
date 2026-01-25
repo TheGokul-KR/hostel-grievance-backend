@@ -72,7 +72,6 @@ const complaintSchema = new mongoose.Schema(
       trim: true
     },
 
-    // 🔒 Technician categories ONLY
     category: {
       type: String,
       enum: ["cleaning","electrical","plumbing","furniture","water","others","ragging"],
@@ -231,6 +230,13 @@ const complaintSchema = new mongoose.Schema(
 
     adminReviewedAt: Date,
 
+    // ✅ NEW: Student-only soft hide (mobile friendly)
+    studentHidden: {
+      type: Boolean,
+      default: false,
+      index: true
+    },
+
     isDeleted: {
       type: Boolean,
       default: false,
@@ -249,7 +255,6 @@ complaintSchema.index({ category: 1, keywords: 1, status: 1 });
 // ================= LIFECYCLE GUARDS =================
 complaintSchema.pre("save", async function () {
 
-  // Ragging rules
   if (this.isRagging) {
     this.assignedTechnician = null;
     this.technicianHistory = [];
