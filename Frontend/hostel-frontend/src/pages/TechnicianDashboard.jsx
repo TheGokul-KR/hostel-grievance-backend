@@ -4,6 +4,18 @@ import { useNavigate } from "react-router-dom";
 import "../styles/technician.css";
 import NotificationBell from "../components/NotificationBell";
 
+/* ================= IMAGE HANDLING ================= */
+const IMAGE_BASE = import.meta.env.VITE_API_BASE_URL
+  ? import.meta.env.VITE_API_BASE_URL.replace(/\/api$/, "") + "/uploads/"
+  : "http://localhost:5000/uploads/";
+
+const normalizeImage = (img) => {
+  if (!img) return "";
+  if (img.startsWith("http")) return img; // Cloudinary
+  return IMAGE_BASE + encodeURIComponent(img); // local uploads
+};
+
+/* ================= STATUS FLOW ================= */
 const NEXT_STATUS = {
   Pending: "In Progress",
   "In Progress": "Resolved",
@@ -22,21 +34,23 @@ function TechnicianDashboard() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [toast, setToast] = useState("");
+  const [previewImage, setPreviewImage] = useState(null);
 
   const navigate = useNavigate();
   const selectedIdRef = useRef(null);
 
-  // ===== AUTH =====
+  /* ================= AUTH ================= */
   useEffect(() => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
+
     if (!token || role?.toLowerCase() !== "technician") {
       localStorage.clear();
       navigate("/", { replace: true });
     }
   }, [navigate]);
 
-  // ===== FETCH =====
+  /* ================= FETCH ================= */
   const fetchComplaints = async () => {
     try {
       const res = await api.get("/complaints/technician");
@@ -46,6 +60,9 @@ function TechnicianDashboard() {
       if (selectedIdRef.current) {
         const found = list.find(c => c._id === selectedIdRef.current);
         setSelectedComplaint(found || null);
+      } else if (list.length) {
+        setSelectedComplaint(list[0]);
+        selectedIdRef.current = list[0]._id;
       }
     } catch {
       setComplaints([]);
@@ -58,10 +75,10 @@ function TechnicianDashboard() {
     return () => clearInterval(i);
   }, []);
 
-  // ===== STATUS UPDATE =====
+  /* ================= STATUS UPDATE ================= */
   const updateStatus = async (id, status) => {
     if (status === "Resolved" && !solutionSummary.trim()) {
-      alert("Solution summary is required when resolving");
+      alert("Solution summary required only when resolving");
       return;
     }
 
@@ -84,13 +101,15 @@ function TechnicianDashboard() {
     }
   };
 
-  // ===== FILTER =====
+  /* ================= FILTER ================= */
   const filtered = complaints.filter(c => {
     const s = search.toLowerCase();
     return (
       (statusFilter === "All" || c.status === statusFilter) &&
-      ((c.complaintText || "").toLowerCase().includes(s) ||
-        (c.roomNumber || "").toLowerCase().includes(s))
+      (
+        (c.complaintText || "").toLowerCase().includes(s) ||
+        (c.roomNumber || "").toLowerCase().includes(s)
+      )
     );
   });
 
@@ -99,7 +118,7 @@ function TechnicianDashboard() {
 
       {toast && <div className="tech-toast">{toast}</div>}
 
-      {/* ===== TOP BAR ===== */}
+      {/* ================= TOP BAR ================= */}
       <div className="tech-topbar">
         <div>
           <div className="tech-title">Technician Dashboard</div>
@@ -126,7 +145,7 @@ function TechnicianDashboard() {
 
       <div className="tech-main">
 
-        {/* ===== LIST ===== */}
+        {/* ================= LIST ================= */}
         <div className="tech-list">
           <div className="tech-filter-bar">
             <input
@@ -170,7 +189,7 @@ function TechnicianDashboard() {
           ))}
         </div>
 
-        {/* ===== DETAIL ===== */}
+        {/* ================= DETAIL ================= */}
         <div className="tech-detail">
           {!selectedComplaint ? (
             <div className="tech-empty">Select a complaint</div>
@@ -180,10 +199,7 @@ function TechnicianDashboard() {
 
               <div className="tech-timeline">
                 {selectedComplaint.statusHistory.map((h, i) => (
-                  <div
-                    key={i}
-                    className={`timeline-item ${h.status.replace(/\s/g, "")}`}
-                  >
+                  <div key={i} className={`timeline-item ${h.status.replace(/\s/g, "")}`}>
                     <span className="timeline-dot" />
                     <div className="timeline-content">
                       <b>{h.status}</b>
@@ -199,6 +215,25 @@ function TechnicianDashboard() {
               <div className="detail-box">
                 {selectedComplaint.complaintText}
               </div>
+
+              {!selectedComplaint.isRagging && (
+                <div className="evidence-box">
+                  <h4>Student Evidence</h4>
+                  {selectedComplaint.images?.length ? (
+                    <div className="repair-grid">
+                      {selectedComplaint.images.map((img, i) => (
+                        <img
+                          key={i}
+                          src={normalizeImage(img)}
+                          onClick={() => setPreviewImage(normalizeImage(img))}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="muted">No images uploaded</p>
+                  )}
+                </div>
+              )}
 
               <label className="optional-label">
                 Optional instructions (required only when resolving)
@@ -230,6 +265,12 @@ function TechnicianDashboard() {
           )}
         </div>
       </div>
+
+      {previewImage && (
+        <div className="image-modal" onClick={() => setPreviewImage(null)}>
+          <img src={previewImage} />
+        </div>
+      )}
     </div>
   );
 }
