@@ -20,14 +20,13 @@ function TechnicianDashboard() {
   const [solutionSummary, setSolutionSummary] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [previewImage, setPreviewImage] = useState(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [toast, setToast] = useState("");
 
   const navigate = useNavigate();
   const selectedIdRef = useRef(null);
 
-  // AUTH
+  // ===== AUTH =====
   useEffect(() => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
@@ -37,6 +36,7 @@ function TechnicianDashboard() {
     }
   }, [navigate]);
 
+  // ===== FETCH =====
   const fetchComplaints = async () => {
     try {
       const res = await api.get("/complaints/technician");
@@ -58,7 +58,13 @@ function TechnicianDashboard() {
     return () => clearInterval(i);
   }, []);
 
+  // ===== STATUS UPDATE =====
   const updateStatus = async (id, status) => {
+    if (status === "Resolved" && !solutionSummary.trim()) {
+      alert("Solution summary is required when resolving");
+      return;
+    }
+
     try {
       setLoadingStatus(true);
 
@@ -78,6 +84,7 @@ function TechnicianDashboard() {
     }
   };
 
+  // ===== FILTER =====
   const filtered = complaints.filter(c => {
     const s = search.toLowerCase();
     return (
@@ -92,7 +99,7 @@ function TechnicianDashboard() {
 
       {toast && <div className="tech-toast">{toast}</div>}
 
-      {/* TOP BAR */}
+      {/* ===== TOP BAR ===== */}
       <div className="tech-topbar">
         <div>
           <div className="tech-title">Technician Dashboard</div>
@@ -103,11 +110,15 @@ function TechnicianDashboard() {
           <button className="tech-btn" onClick={() => navigate("/technician/radar")}>
             Radar
           </button>
+          <div className="tech-user">{techName}</div>
           <NotificationBell />
-          <button className="tech-btn danger" onClick={() => {
-            localStorage.clear();
-            navigate("/", { replace: true });
-          }}>
+          <button
+            className="tech-btn danger"
+            onClick={() => {
+              localStorage.clear();
+              navigate("/", { replace: true });
+            }}
+          >
             Logout
           </button>
         </div>
@@ -115,7 +126,7 @@ function TechnicianDashboard() {
 
       <div className="tech-main">
 
-        {/* LIST */}
+        {/* ===== LIST ===== */}
         <div className="tech-list">
           <div className="tech-filter-bar">
             <input
@@ -140,14 +151,16 @@ function TechnicianDashboard() {
           {filtered.map(c => (
             <div
               key={c._id}
-              className={`tech-list-card ${c.status.replace(/\s/g, "")} ${selectedComplaint?._id === c._id ? "active" : ""}`}
+              className={`tech-list-card ${c.status.replace(/\s/g, "")} ${
+                selectedComplaint?._id === c._id ? "active" : ""
+              }`}
               onClick={() => {
                 selectedIdRef.current = c._id;
                 setSelectedComplaint(c);
               }}
             >
               <div className="list-head">
-                <span className={`status ${c.status.replace(/\s/g, "")}`}>
+                <span className={`status-badge ${c.status.replace(/\s/g, "")}`}>
                   {c.status}
                 </span>
                 <span>Room {c.roomNumber}</span>
@@ -157,30 +170,42 @@ function TechnicianDashboard() {
           ))}
         </div>
 
-        {/* DETAIL */}
+        {/* ===== DETAIL ===== */}
         <div className="tech-detail">
           {!selectedComplaint ? (
             <div className="tech-empty">Select a complaint</div>
           ) : (
             <>
-              <h3>Complaint Details</h3>
+              <div className="detail-title">Complaint Timeline</div>
 
-              <p>{selectedComplaint.complaintText}</p>
-
-              {/* TIMELINE */}
-              <div className="timeline">
-                {selectedComplaint.statusHistory?.map((h, i) => (
-                  <div key={i} className="timeline-item">
-                    <span>{h.status}</span>
-                    <small>{new Date(h.changedAt).toLocaleString()}</small>
-                    {h.remark && <p>{h.remark}</p>}
+              <div className="tech-timeline">
+                {selectedComplaint.statusHistory.map((h, i) => (
+                  <div
+                    key={i}
+                    className={`timeline-item ${h.status.replace(/\s/g, "")}`}
+                  >
+                    <span className="timeline-dot" />
+                    <div className="timeline-content">
+                      <b>{h.status}</b>
+                      <small>
+                        {new Date(h.changedAt).toLocaleString()} • {h.changedByRole}
+                      </small>
+                      {h.remark && <p>{h.remark}</p>}
+                    </div>
                   </div>
                 ))}
               </div>
 
+              <div className="detail-box">
+                {selectedComplaint.complaintText}
+              </div>
+
+              <label className="optional-label">
+                Optional instructions (required only when resolving)
+              </label>
+
               <textarea
-                className="tech-input"
-                placeholder="Optional instructions / notes"
+                className="tech-input optional"
                 value={solutionSummary}
                 onChange={e => setSolutionSummary(e.target.value)}
               />
@@ -205,12 +230,6 @@ function TechnicianDashboard() {
           )}
         </div>
       </div>
-
-      {previewImage && (
-        <div className="image-modal" onClick={() => setPreviewImage(null)}>
-          <img src={previewImage} />
-        </div>
-      )}
     </div>
   );
 }

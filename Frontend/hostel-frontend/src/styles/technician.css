@@ -303,3 +303,87 @@ body {
     grid-template-columns: 1fr;
   }
 }
+.status-badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.status-badge.Pending { background:#facc15; color:#000 }
+.status-badge.InProgress { background:#38bdf8; color:#000 }
+.status-badge.Resolved {
+  background:#22c55e;
+  color:#022c22;
+  animation: pulse 1.6s infinite;
+}
+.status-badge.Completed { background:#a855f7 }
+@keyframes pulse {
+  0% { box-shadow:0 0 0 0 rgba(34,197,94,.6) }
+  70% { box-shadow:0 0 0 12px rgba(34,197,94,0) }
+  100% { box-shadow:0 0 0 0 rgba(34,197,94,0) }
+}
+/* ===== STATUS COLORS ===== */
+.Pending { border-left: 4px solid #facc15; }
+.InProgress { border-left: 4px solid #38bdf8; }
+.Resolved { border-left: 4px solid #a855f7; }
+.Completed { border-left: 4px solid #22c55e; }
+
+/* ===== STATUS BADGE ===== */
+.status-badge {
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.status-badge.Pending { background: #facc1530; color: #facc15; }
+.status-badge.InProgress { background: #38bdf830; color: #38bdf8; }
+.status-badge.Resolved { background: #a855f730; color: #a855f7; }
+.status-badge.Completed { background: #22c55e30; color: #22c55e; }
+
+/* ===== TIMELINE ===== */
+.tech-timeline {
+  margin: 16px 0;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.timeline-dot {
+  width: 10px;
+  height: 10px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: #64748b;
+}
+
+.timeline-item.Pending .timeline-dot { background: #facc15; }
+.timeline-item.InProgress .timeline-dot { background: #38bdf8; }
+.timeline-item.Resolved .timeline-dot { background: #a855f7; }
+.timeline-item.Completed .timeline-dot { background: #22c55e; }
+
+.timeline-content small {
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.optional-label {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 10px;
+  display: block;
+}
+
+/* ===== STATUS CHANGE PULSE ===== */
+.tech-list-card.active {
+  animation: pulse 1.5s ease-out;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(99,102,241,0.6); }
+  100% { box-shadow: 0 0 0 12px rgba(99,102,241,0); }
+}
